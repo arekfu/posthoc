@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import numpy as np
+from collections import namedtuple
 
 class XMLResult:
     """Extract data from the Tripoli-4® output file.
@@ -19,8 +20,9 @@ class XMLResult:
         from bs4 import BeautifulSoup
         with open(fname) as f:
             self.soup = BeautifulSoup(f.read(), 'lxml')
-
         self.dtype = float
+        self.BatchResultTuple = namedtuple('BatchResult', ['edges', 'contents', 'widths'])
+        self.MeanResultTuple = namedtuple('MeanResult', ['edges', 'contents', 'errors', 'widths'])
 
     def _list_from_iterable_attr(self, iterable, attr):
         return [ s[attr] for s in iterable ]
@@ -113,7 +115,7 @@ class XMLResult:
         if divide_by_bin:
             result /= width
         left = grid[:-1]
-        return (left, result, width)
+        return self.BatchResultTuple(edges=left, contents=result, widths=width)
 
     def mean_results_xml(self, batch_num='last'):
         if batch_num=='last':
@@ -157,5 +159,5 @@ class XMLResult:
             val /= width
             sd /= width
         left = grid[:-1]
-        return (left, val, width, sd)
+        return self.MeanResultTuple(edges=left, contents=val, widths=width, errors=sd)
 
