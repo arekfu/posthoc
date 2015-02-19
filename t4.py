@@ -11,9 +11,7 @@ class XMLResult:
 
     def xgrids(self):
         for gridxml in self.soup.list_decoupage.find_all('decoupage', recursive=False):
-            grid = np.fromstring(gridxml.string, sep=' ', dtype=self.dtype)
-            name = unicode(gridxml.get('name'))
-            yield name, grid
+            yield gridxml
 
     def grids(self):
         return list(grids)
