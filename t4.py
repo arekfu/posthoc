@@ -9,6 +9,9 @@ class XMLResult:
 
         self.dtype = float
 
+    def _list_from_iterable_attr(self, iterable, attr):
+        return [ s[attr] for s in iterable ]
+
     def xgrids(self):
         for gridxml in self.soup.list_decoupage.find_all('decoupage', recursive=False):
             yield gridxml
@@ -21,12 +24,18 @@ class XMLResult:
         grid = np.fromstring(gridxml.string, sep=' ', dtype=self.dtype)
         return grid
 
+    def grid_names(self):
+        return self._list_from_iterable_attr(self.xgrids(), 'name')
+
     def xscores(self):
         for scorexml in self.soup.scores_definition.find_all('score', recursive=False):
             yield scorexml
 
     def scores(self):
         return self.soup.scores_definition.find_all('score', recursive=False)
+
+    def score_names(self):
+        return self._list_from_iterable_attr(self.xscores(), 'name')
 
     def score(self, name):
         score = self.soup.scores_definition.find('score', recursive=False, attrs={'name': name})
@@ -42,6 +51,9 @@ class XMLResult:
     def response(self, name):
         response = self.soup.response_definition.find('response', recursive=False, attrs={'name': name})
         return response
+
+    def response_names(self):
+        return self._list_from_iterable_attr(self.xresponses(), 'name')
 
     def batch_results(self, batch_num):
         if isinstance(batch_num, int):
