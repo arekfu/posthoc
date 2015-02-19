@@ -98,6 +98,10 @@ class XMLResult:
         Keyword arguments:
         divide_by_bin -- whether the score result should be divided by the bin
         size.
+
+        Return value:
+        a NamedTuple containing three numpy arrays: the lower bin edges
+        (edges), the bin contents (contents) and the bin widths (widths).
         """
         if not isinstance(score_name,str):
             raise ValueError('argument score_name to XMLResult.batch_result must be a string')
@@ -138,6 +142,11 @@ class XMLResult:
         'last'.
         divide_by_bin -- whether the score result should be divided by the bin
         size.
+
+        Return value:
+        a NamedTuple containing four numpy arrays: the lower bin edges
+        (edges), the bin contents (contents), the bin widths (widths) and the
+        standard deviations on the bin contents (errors).
         """
         if not isinstance(score_name,str):
             raise ValueError('argument score_name to XMLResult.mean_result must be a string')
