@@ -170,3 +170,11 @@ class XMLResult:
         left = grid[:-1]
         return self.MeanResultTuple(edges=left, contents=val, widths=width, errors=sd)
 
+import matplotlib.pyplot as plt
+plt.ion()
+
+class Plotter:
+    def energy_score(self, xml_result, score_name, batch_num='last', divide_by_bin=True):
+        result = xml_result.mean_result(score_name, batch_num, divide_by_bin)
+        plt.bar(result.edges, result.contents, width=result.widths, yerr=result.errors)
+        plt.draw()
