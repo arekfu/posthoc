@@ -105,7 +105,7 @@ class XMLResult:
         """
         if not isinstance(score_name,str):
             raise ValueError('argument score_name to XMLResult.batch_result must be a string')
-        score = self.score(score_name)
+        score = self.score_xml(score_name)
         if not score:
             raise ValueError('argument score_name to XMLResult.batch_result must be the name of a score')
         score_grid_name = score['nrj_dec']
@@ -150,7 +150,7 @@ class XMLResult:
         """
         if not isinstance(score_name,str):
             raise ValueError('argument score_name to XMLResult.mean_result must be a string')
-        score = self.score(score_name)
+        score = self.score_xml(score_name)
         if not score:
             raise ValueError('argument score_name to XMLResult.mean_result must be the name of a score')
         score_grid_name = score['nrj_dec']
