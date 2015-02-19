@@ -93,7 +93,7 @@ class XMLResult:
             raise ValueError("argument batch_num to XMLResult.mean_results_xml must be 'last' or a batch number (int)")
         return results
 
-    def mean_result(self, score_name, normalize=True):
+    def mean_result(self, score_name, batch_num='last', normalize=True):
         if not isinstance(score_name,str):
             raise ValueError('argument score_name to XMLResult.mean_result must be a string')
         score = self.score(score_name)
@@ -102,7 +102,7 @@ class XMLResult:
         score_grid_name = score['nrj_dec']
         grid = self.grid(score_grid_name)
         score_id = score['id']
-        results = self.mean_results_xml()
+        results = self.mean_results_xml(batch_num)
         resultxml = results.find('mean_result', scoreid=score_id).gelement
         val_list = [ self.dtype(v.string) for v in resultxml.find_all('val') ]
         sd_list = [ self.dtype(v.string) for v in resultxml.find_all('sd') ]
