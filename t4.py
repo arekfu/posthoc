@@ -9,28 +9,37 @@ class XMLResult:
 
         self.dtype = float
 
-    def grids(self):
+    def xgrids(self):
         for gridxml in self.soup.list_decoupage.find_all('decoupage', recursive=False):
             grid = np.fromstring(gridxml.string, sep=' ', dtype=self.dtype)
             name = unicode(gridxml.get('name'))
             yield name, grid
+
+    def grids(self):
+        return list(grids)
 
     def grid(self, name):
         gridxml = self.soup.list_decoupage.find('decoupage', recursive=False, attrs={'name': name})
         grid = np.fromstring(gridxml.string, sep=' ', dtype=self.dtype)
         return grid
 
-    def scores(self):
+    def xscores(self):
         for scorexml in self.soup.scores_definition.find_all('score', recursive=False):
             yield scorexml
+
+    def scores(self):
+        return self.soup.scores_definition.find_all('score', recursive=False)
 
     def score(self, name):
         score = self.soup.scores_definition.find('score', recursive=False, attrs={'name': name})
         return score
 
-    def responses(self):
+    def xresponses(self):
         for responsexml in self.soup.response_definition.find_all('response', recursive=False):
             yield responsexml
+
+    def responses(self):
+        return self.soup.response_definition.find_all('response', recursive=False)
 
     def response(self, name):
         response = self.soup.response_definition.find('response', recursive=False, attrs={'name': name})
