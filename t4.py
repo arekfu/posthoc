@@ -174,7 +174,8 @@ import matplotlib.pyplot as plt
 plt.ion()
 
 class Plotter:
-    def energy_score(self, xml_result, score_name, batch_num='last', divide_by_bin=True):
+    def energy_score(self, xml_result, score_name, batch_num='last', divide_by_bin=True, **kwargs):
         result = xml_result.mean_result(score_name, batch_num, divide_by_bin)
-        plt.bar(result.edges, result.contents, width=result.widths, yerr=result.errors)
+        plt.bar(result.edges, result.contents, width=result.widths, yerr=result.errors, **kwargs)
         plt.draw()
+
