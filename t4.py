@@ -82,7 +82,7 @@ class XMLResult:
         if normalize:
             result /= width
         left = grid[:-1]
-        return np.dstack((left, result, width))
+        return (left, result, width)
 
     def mean_results_xml(self, batch_num='last'):
         if batch_num=='last':
@@ -114,5 +114,5 @@ class XMLResult:
             val /= width
             sd /= width
         left = grid[:-1]
-        return np.dstack((left, val, width, sd))
+        return (left, val, width, sd)
 
