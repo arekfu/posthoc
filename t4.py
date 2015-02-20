@@ -21,8 +21,7 @@ class XMLResult:
         with open(fname) as f:
             self.soup = BeautifulSoup(f.read(), 'lxml')
         self.dtype = float
-        self.BatchResultTuple = namedtuple('BatchResult', ['edges', 'contents'])
-        self.MeanResultTuple = namedtuple('MeanResult', ['edges', 'contents', 'errors'])
+        self.ResultTuple = namedtuple('Result', ['edges', 'contents', 'errors'])
 
     def _list_from_iterable_attr(self, iterable, attr):
         return [ s[attr] for s in iterable ]
@@ -100,8 +99,9 @@ class XMLResult:
         size.
 
         Return value:
-        a NamedTuple containing three numpy arrays: the lower bin edges
-        (edges) and the bin contents (contents).
+        a NamedTuple containing two numpy arrays: the lower bin edges (edges)
+        and the bin contents (contents). The third tuple element (errors) is
+        set to None.
         """
         if not isinstance(score_name,str):
             raise ValueError('argument score_name to XMLResult.batch_result must be a string')
@@ -119,7 +119,7 @@ class XMLResult:
             width = np.ediff1d(grid)
             result /= width
         result = np.append(result, [self.dtype(0)])
-        return self.BatchResultTuple(edges=grid, contents=result)
+        return self.ResultTuple(edges=grid, contents=result, errors=None)
 
     def mean_results_xml(self, batch_num='last'):
         if batch_num=='last':
@@ -169,19 +169,56 @@ class XMLResult:
             sd /= width
         val = np.append(val, [self.dtype(0)])
         sd = np.append(sd, [self.dtype(0)])
-        return self.MeanResultTuple(edges=grid, contents=val, errors=sd)
+        return self.ResultTuple(edges=grid, contents=val, errors=sd)
 
 import matplotlib.pyplot as plt
 plt.ion()
 
 class Plotter:
-    def energy_score(self, xml_result, score_name, batch_num='last', divide_by_bin=True, **kwargs):
-        result = xml_result.mean_result(score_name, batch_num, divide_by_bin)
+    def draw_step(self, result, batch_num='last', divide_by_bin=True, **kwargs):
         step_artist, = plt.step(result.edges, result.contents, where='post', **kwargs)
         centers = 0.5*(result.edges[1:]+result.edges[:-1])
         if not 'color' in kwargs:
             lc = plt.getp(step_artist, 'color')
             kwargs['color'] = lc
-        errorbar_artists = plt.errorbar(centers, result.contents[:-1], yerr=result.errors[:-1], linestyle='none', **kwargs)
+        try:
+            yerr = result.errors[:-1]
+        except TypeError:
+            yerr = None
+        errorbar_artists = plt.errorbar(centers, result.contents[:-1], yerr=yerr, linestyle='none', **kwargs)
         plt.draw()
+
+class PlotManager:
+    def __init__(self):
+        self.default_options = {
+                'batch_num': 'last',
+                'divide_by_bin': True,
+                }
+        self.plotter = Plotter()
+
+    def energy_score(self, to_plot):
+        import magic
+        with magic.Magic() as m:
+            for item in to_plot:
+                file_name = item[0]
+                score_name = item[1]
+                kwargs = self.default_options.copy()
+                try:
+                    kwargs.update(item[2])
+                except IndexError:
+                    pass
+
+                magic_id = m.id_filename(file_name)
+
+                if 'XML' in magic_id:
+                    xml_result = XMLResult(file_name)
+                    result = xml_result.mean_result(
+                            score_name,
+                            batch_num=kwargs['batch_num'],
+                            divide_by_bin=kwargs['divide_by_bin']
+                            )
+                else:
+                    raise Exception('for the moment we only accept XML input')
+
+                self.plotter.draw_step(result, **kwargs)
 
