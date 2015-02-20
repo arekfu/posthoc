@@ -2,7 +2,11 @@
 # coding: utf-8
 
 import numpy as np
+import matplotlib.pyplot as plt
+import magic
 from collections import namedtuple
+
+plt.ion()
 
 class XMLResult:
     """Extract data from the Tripoli-4® output file.
@@ -171,9 +175,6 @@ class XMLResult:
         sd = np.append(sd, [self.dtype(0)])
         return self.ResultTuple(edges=grid, contents=val, errors=sd)
 
-import matplotlib.pyplot as plt
-plt.ion()
-
 class Plotter:
     def draw_step(self, result, batch_num='last', divide_by_bin=True, **kwargs):
         step_artist, = plt.step(result.edges, result.contents, where='post', **kwargs)
@@ -197,7 +198,6 @@ class PlotManager:
         self.plotter = Plotter()
 
     def energy_score(self, to_plot):
-        import magic
         with magic.Magic() as m:
             for item in to_plot:
                 file_name = item[0]
