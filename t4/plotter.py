@@ -14,8 +14,10 @@ class Plotter:
         else:
             self.axes = plt.axes()
 
-    def draw_step(self, result, batch_num='last', divide_by_bin=True, **kwargs):
-        step_artist, = self.axes.step(result.edges, result.contents, where='post', **kwargs)
+    def draw_step(self, data_source):
+        result = data_source.result
+        kwargs = data_source.kwargs.copy()
+        step_artist, = self.axes.plot(result.edges, result.contents, drawstyle='steps-post', **kwargs)
         centers = 0.5*(result.edges[1:]+result.edges[:-1])
         if not 'color' in kwargs:
             lc = plt.getp(step_artist, 'color')

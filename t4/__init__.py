@@ -1,1 +1,1 @@
-__all__ = ['xmlresult', 'plotter', 'plotmanager']
+__all__ = ['xmlresult', 'plotter', 'plotmanager', 'datasource']
