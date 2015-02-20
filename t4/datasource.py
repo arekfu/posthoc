@@ -14,12 +14,12 @@ class DataSource:
                 'divide_by_bin': True,
                 }
         try:
-            self.setup_from_xml(item)
+            self.init_from_xml(item)
         except IndexError:
-            self.setup_from_txt(item)
+            self.init_from_txt(item)
 
-    def setup_from_xml(self, item):
-        """Setup the data source from an XML file.
+    def init_from_xml(self, item):
+        """Initialize the data source from an XML file.
 
         If item is supposed to represent XML input, it must be of the form
            (file_name, score_name[, kwargs])
@@ -62,6 +62,6 @@ class DataSource:
         del self.kwargs['batch_num']
         del self.kwargs['divide_by_bin']
 
-    def setup_from_txt(self, item):
+    def init_from_txt(self, item):
         pass
 
