@@ -1,3 +1,5 @@
+# coding: utf-8
+
 import magic
 from xmlresult import XMLResult
 
