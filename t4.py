@@ -206,9 +206,10 @@ class PlotManager:
                 }
         self.plotter = Plotter()
 
-    def energy_score(self, to_plot, axes=None):
-        if axes:
-            self.plotter.set_axes(axes)
+    def energy_score(self, to_plot, axes=None, xscale='linear', yscale='log', **kwargs):
+        if not axes:
+            axes = plt.axes(xscale=xscale, yscale=yscale, **kwargs)
+        self.plotter.set_axes(axes)
 
         with magic.Magic() as m:
             for item in to_plot:
@@ -233,5 +234,8 @@ class PlotManager:
                     raise Exception('for the moment we only accept XML input')
 
                 self.plotter.draw_step(result, **kwargs)
+
+        plt.gca().set_xscale(xscale)
+        plt.gca().set_yscale(yscale)
         plt.draw()
 
