@@ -25,7 +25,7 @@ class XMLResult:
         with open(fname) as f:
             self.soup = BeautifulSoup(f.read(), 'lxml')
         self.dtype = float
-        self.ResultTuple = namedtuple('Result', ['edges', 'contents', 'errors'])
+        self.ResultTuple = namedtuple('Result', ['edges', 'contents', 'errors', 'xlabel', 'ylabel'])
 
     def _list_from_iterable_attr(self, iterable, attr):
         return [ s[attr] for s in iterable ]
@@ -37,8 +37,8 @@ class XMLResult:
     def grids_xml(self):
         return self.soup.list_decoupage.find_all('decoupage', recursive=False)
 
-    def grid_xml(self, name):
-        return self.soup.list_decoupage.find('decoupage', recursive=False, attrs={'name': name})
+    def grid_xml(self, **kwargs):
+        return self.soup.list_decoupage.find('decoupage', recursive=False, attrs=kwargs)
 
     def grid(self, name):
         """Return the specified grid as a numpy array.
@@ -46,7 +46,7 @@ class XMLResult:
         Arguments:
         name -- the name of the grid
         """
-        gridxml = self.grid_xml(name)
+        gridxml = self.grid_xml(name=name)
         grid = np.fromstring(gridxml.string, sep=' ', dtype=self.dtype)
         return grid
 
@@ -65,8 +65,8 @@ class XMLResult:
         """Return the names of all defined scores, as a list."""
         return self._list_from_iterable_attr(self.xscores_xml(), 'name')
 
-    def score_xml(self, name):
-        score = self.soup.scores_definition.find('score', recursive=False, attrs={'name': name})
+    def score_xml(self, **kwargs):
+        score = self.soup.scores_definition.find('score', recursive=False, attrs=kwargs)
         return score
 
     def xresponses_xml(self):
@@ -76,8 +76,8 @@ class XMLResult:
     def responses_xml(self):
         return self.soup.response_definition.find_all('response', recursive=False)
 
-    def response_xml(self, name):
-        response = self.soup.response_definition.find('response', recursive=False, attrs={'name': name})
+    def response_xml(self, **kwargs):
+        response = self.soup.response_definition.find('response', recursive=False, attrs=kwargs)
         return response
 
     def response_names(self):
@@ -105,13 +105,15 @@ class XMLResult:
         Return value:
         a NamedTuple containing two numpy arrays: the lower bin edges (edges)
         and the bin contents (contents). The third tuple element (errors) is
-        set to None.
+        set to None. It also contains suggested strings for the axis labels
+        (xlabel and ylabel).
         """
         if not isinstance(score_name,str):
             raise ValueError('argument score_name to XMLResult.batch_result must be a string')
-        score = self.score_xml(score_name)
+        score = self.score_xml(name=score_name)
         if not score:
             raise ValueError('argument score_name to XMLResult.batch_result must be the name of a score')
+        xlabel, ylabel = labels(score)
         score_grid_name = score['nrj_dec']
         grid = self.grid(score_grid_name)
         score_id = score['id']
@@ -123,7 +125,7 @@ class XMLResult:
             width = np.ediff1d(grid)
             result /= width
         result = np.append(result, [self.dtype(0)])
-        return self.ResultTuple(edges=grid, contents=result, errors=None)
+        return self.ResultTuple(edges=grid, contents=result, errors=None, xlabel=xlabel, ylabel=ylabel)
 
     def mean_results_xml(self, batch_num='last'):
         if batch_num=='last':
@@ -148,15 +150,17 @@ class XMLResult:
         size.
 
         Return value:
-        a NamedTuple containing four numpy arrays: the lower bin edges
+        a NamedTuple containing three numpy arrays: the lower bin edges
         (edges), the bin contents (contents) and the standard deviations on the
-        bin contents (errors).
+        bin contents (errors). It also contains suggested strings for the axis
+        labels (xlabel and ylabel).
         """
         if not isinstance(score_name,str):
             raise ValueError('argument score_name to XMLResult.mean_result must be a string')
-        score = self.score_xml(score_name)
+        score = self.score_xml(name=score_name)
         if not score:
             raise ValueError('argument score_name to XMLResult.mean_result must be the name of a score')
+        xlabel, ylabel = self.labels(score)
         score_grid_name = score['nrj_dec']
         grid = self.grid(score_grid_name)
         score_id = score['id']
@@ -173,7 +177,22 @@ class XMLResult:
             sd /= width
         val = np.append(val, [self.dtype(0)])
         sd = np.append(sd, [self.dtype(0)])
-        return self.ResultTuple(edges=grid, contents=val, errors=sd)
+        return self.ResultTuple(edges=grid, contents=val, errors=sd, xlabel=xlabel, ylabel=ylabel)
+
+    def labels(self, score):
+        response_id = score['response_id']
+        response = self.response_xml(id=response_id)
+        particle = response['particle'].lower()
+        response_type = response['type'].lower()
+        ylabel = particle + ' ' + response_type
+        if 'tps_dec' in score.attrs:
+            xlabel = 'time'
+        elif 'mu_dec' in score.attrs:
+            xlabel = '$\mu$'
+        else:
+            xlabel = 'energy (MeV)'
+        return xlabel, ylabel
+
 
 class Plotter:
     def __init__(self):
@@ -211,7 +230,9 @@ class PlotManager:
             axes = plt.axes(xscale=xscale, yscale=yscale, **kwargs)
         self.plotter.set_axes(axes)
 
+        xlabel = ylabel = ''
         with magic.Magic() as m:
+            set_labels = True
             for item in to_plot:
                 file_name = item[0]
                 score_name = item[1]
@@ -230,11 +251,16 @@ class PlotManager:
                             batch_num=kwargs['batch_num'],
                             divide_by_bin=kwargs['divide_by_bin']
                             )
+                    if set_labels:
+                        set_labels=False
+                        xlabel, ylabel = result.xlabel, result.ylabel
                 else:
                     raise Exception('for the moment we only accept XML input')
 
                 self.plotter.draw_step(result, **kwargs)
 
+        plt.gca().set_xlabel(xlabel)
+        plt.gca().set_ylabel(ylabel)
         plt.gca().set_xscale(xscale)
         plt.gca().set_yscale(yscale)
         plt.draw()
