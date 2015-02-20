@@ -21,8 +21,8 @@ class XMLResult:
         with open(fname) as f:
             self.soup = BeautifulSoup(f.read(), 'lxml')
         self.dtype = float
-        self.BatchResultTuple = namedtuple('BatchResult', ['edges', 'contents', 'widths'])
-        self.MeanResultTuple = namedtuple('MeanResult', ['edges', 'contents', 'errors', 'widths'])
+        self.BatchResultTuple = namedtuple('BatchResult', ['edges', 'contents'])
+        self.MeanResultTuple = namedtuple('MeanResult', ['edges', 'contents', 'errors'])
 
     def _list_from_iterable_attr(self, iterable, attr):
         return [ s[attr] for s in iterable ]
@@ -101,7 +101,7 @@ class XMLResult:
 
         Return value:
         a NamedTuple containing three numpy arrays: the lower bin edges
-        (edges), the bin contents (contents) and the bin widths (widths).
+        (edges) and the bin contents (contents).
         """
         if not isinstance(score_name,str):
             raise ValueError('argument score_name to XMLResult.batch_result must be a string')
@@ -115,11 +115,11 @@ class XMLResult:
         resultxml = results.find('result', scoreid=score_id).gelement
         result = np.fromstring(resultxml.string, sep=' ', dtype=self.dtype)
         # divide by the bin width if requested
-        width = np.ediff1d(grid)
         if divide_by_bin:
+            width = np.ediff1d(grid)
             result /= width
-        left = grid[:-1]
-        return self.BatchResultTuple(edges=left, contents=result, widths=width)
+        result = np.append(result, [self.dtype(0)])
+        return self.BatchResultTuple(edges=grid, contents=result)
 
     def mean_results_xml(self, batch_num='last'):
         if batch_num=='last':
@@ -145,8 +145,8 @@ class XMLResult:
 
         Return value:
         a NamedTuple containing four numpy arrays: the lower bin edges
-        (edges), the bin contents (contents), the bin widths (widths) and the
-        standard deviations on the bin contents (errors).
+        (edges), the bin contents (contents) and the standard deviations on the
+        bin contents (errors).
         """
         if not isinstance(score_name,str):
             raise ValueError('argument score_name to XMLResult.mean_result must be a string')
@@ -163,12 +163,13 @@ class XMLResult:
         val = np.array(val_list, dtype=self.dtype)
         sd = np.array(sd_list, dtype=self.dtype)
         # divide by the bin width if requested
-        width = np.ediff1d(grid)
         if divide_by_bin:
+            width = np.ediff1d(grid)
             val /= width
             sd /= width
-        left = grid[:-1]
-        return self.MeanResultTuple(edges=left, contents=val, widths=width, errors=sd)
+        val = np.append(val, [self.dtype(0)])
+        sd = np.append(sd, [self.dtype(0)])
+        return self.MeanResultTuple(edges=grid, contents=val, errors=sd)
 
 import matplotlib.pyplot as plt
 plt.ion()
@@ -176,6 +177,11 @@ plt.ion()
 class Plotter:
     def energy_score(self, xml_result, score_name, batch_num='last', divide_by_bin=True, **kwargs):
         result = xml_result.mean_result(score_name, batch_num, divide_by_bin)
-        plt.bar(result.edges, result.contents, width=result.widths, yerr=result.errors, **kwargs)
+        step_artist, = plt.step(result.edges, result.contents, where='post', **kwargs)
+        centers = 0.5*(result.edges[1:]+result.edges[:-1])
+        if not 'color' in kwargs:
+            lc = plt.getp(step_artist, 'color')
+            kwargs['color'] = lc
+        errorbar_artists = plt.errorbar(centers, result.contents[:-1], yerr=result.errors[:-1], linestyle='none', **kwargs)
         plt.draw()
 
