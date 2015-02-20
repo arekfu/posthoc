@@ -176,8 +176,18 @@ class XMLResult:
         return self.ResultTuple(edges=grid, contents=val, errors=sd)
 
 class Plotter:
+    def __init__(self):
+        self.set_axes()
+
+    def set_axes(self, axes=None):
+        if axes:
+            self.axes = axes
+            self.axes.set_color_cycle(None)
+        else:
+            self.axes = plt
+
     def draw_step(self, result, batch_num='last', divide_by_bin=True, **kwargs):
-        step_artist, = plt.step(result.edges, result.contents, where='post', **kwargs)
+        step_artist, = self.axes.step(result.edges, result.contents, where='post', **kwargs)
         centers = 0.5*(result.edges[1:]+result.edges[:-1])
         if not 'color' in kwargs:
             lc = plt.getp(step_artist, 'color')
@@ -186,8 +196,7 @@ class Plotter:
             yerr = result.errors[:-1]
         except TypeError:
             yerr = None
-        errorbar_artists = plt.errorbar(centers, result.contents[:-1], yerr=yerr, linestyle='none', **kwargs)
-        plt.draw()
+        errorbar_artists = self.axes.errorbar(centers, result.contents[:-1], yerr=yerr, linestyle='none', **kwargs)
 
 class PlotManager:
     def __init__(self):
@@ -197,7 +206,10 @@ class PlotManager:
                 }
         self.plotter = Plotter()
 
-    def energy_score(self, to_plot):
+    def energy_score(self, to_plot, axes=None):
+        if axes:
+            self.plotter.set_axes(axes)
+
         with magic.Magic() as m:
             for item in to_plot:
                 file_name = item[0]
@@ -221,4 +233,5 @@ class PlotManager:
                     raise Exception('for the moment we only accept XML input')
 
                 self.plotter.draw_step(result, **kwargs)
+        plt.draw()
 
