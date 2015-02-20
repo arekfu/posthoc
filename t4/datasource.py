@@ -2,6 +2,7 @@
 
 import magic
 from xmlresult import XMLResult
+from collections import Mapping
 
 class SourceError(Exception):
     pass
@@ -18,18 +19,32 @@ class DataSource:
             self.setup_from_txt(item)
 
     def setup_from_xml(self, item):
+        """Setup the data source from an XML file.
+
+        If item is supposed to represent XML input, it must be of the form
+           (file_name, score_name[, kwargs])
+        where file_name and score_name are strings and kwargs is an optional
+        dictionary of options. We test for these properties.
+        """
+
         try:
             file_name = item[0]
             score_name = item[1]
         except IndexError:
             raise SourceError
 
+        if not isinstance(file_name, basestring) or not isinstance(score_name, basestring):
+            raise SourceError
+
         self.kwargs = self.default_options.copy()
 
         try:
-            self.kwargs.update(item[2])
+            options = item[2]
         except IndexError:
             pass
+        if not isinstance(options, Mapping):
+            raise SourceError
+        self.kwargs.update(options)
 
         with magic.Magic() as m:
             magic_id = m.id_filename(file_name)
