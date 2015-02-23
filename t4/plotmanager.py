@@ -2,11 +2,11 @@
 
 import matplotlib.pyplot as plt
 from plotter import Plotter
-from datasource import DataSource
+import datasources
 
 plt.ion()
 
-class PlotManager:
+class PlotManager(object):
     def __init__(self):
         self.plotter = Plotter()
 
@@ -17,13 +17,13 @@ class PlotManager:
 
         xlabel = ylabel = ''
         for item in to_plot:
-            ds = DataSource(item)
+            ds = datasources.get_datasource(item)
             self.plotter.draw_step(ds)
 
             if not xlabel:
-                xlabel = ds.result.xlabel
+                xlabel = ds.xlabel
             if not ylabel:
-                ylabel = ds.result.ylabel
+                ylabel = ds.ylabel
 
         plt.gca().set_xlabel(xlabel)
         plt.gca().set_ylabel(ylabel)
