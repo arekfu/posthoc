@@ -110,11 +110,11 @@ class CSVDataSource(DataSource):
     def __init__(
             self,
             file_name,
-            column_spec='1:2',
+            column_spec='0:1',
             xlabel=None,
             ylabel=None,
-            comment_chars = '#@',
-            delimiter_chars = ' \t',
+            comment_chars='#@',
+            delimiter_chars=' \t',
             **options):
         """Initialize the data source from a CSV file.
 
@@ -143,8 +143,8 @@ class CSVDataSource(DataSource):
         csv_result = CSVResult(
                 file_name,
                 column_spec=column_spec,
-                comment_chars=self.kwargs['comment_chars'],
-                delimiter_chars=self.kwargs['delimiter_chars']
+                comment_chars=comment_chars,
+                delimiter_chars=delimiter_chars
                 )
         self.result = csv_result.result()
 

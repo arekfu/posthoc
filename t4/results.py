@@ -202,6 +202,11 @@ class XMLResult(object):
         if not score:
             raise ValueError('argument score_name to XMLResult.batch_result must be the name of a score')
         score_grid_name = score['nrj_dec']
+        score_div_value_str = score.gelement_def['div_value']
+        if score_div_value_str:
+            score_div_value = self.dtype(score_div_value_str)
+        else:
+            score_div_value = None
         grid = self.grid(score_grid_name)
         score_id = score['id']
         results = self.batch_results_xml(batch_num)
@@ -211,6 +216,9 @@ class XMLResult(object):
         if divide_by_bin:
             width = np.ediff1d(grid)
             result /= width
+        # divide by the value in the XML tree
+        if score_div_value:
+            result /= score_div_value
         result = np.append(result, [self.dtype(0)])
         return Result(edges=grid, contents=result, errors=None, xerrors=None)
 
@@ -247,6 +255,11 @@ class XMLResult(object):
         if not score:
             raise ValueError('argument score_name to XMLResult.mean_result must be the name of a score')
         score_grid_name = score['nrj_dec']
+        score_div_value_str = score.gelement_def['div_value']
+        if score_div_value_str:
+            score_div_value = self.dtype(score_div_value_str)
+        else:
+            score_div_value = None
         grid = self.grid(score_grid_name)
         score_id = score['id']
         results = self.mean_results_xml(batch_num)
@@ -260,6 +273,10 @@ class XMLResult(object):
             width = np.ediff1d(grid)
             val /= width
             sd /= width
+        # divide by the value in the XML tree
+        if score_div_value:
+            val /= score_div_value
+            sd /= score_div_value
         val = np.append(val, [self.dtype(0)])
         sd = np.append(sd, [self.dtype(0)])
         return Result(edges=grid, contents=val, errors=sd, xerrors=None)
@@ -282,17 +299,19 @@ class XMLResult(object):
         return xlabel, ylabel
 
 class CSVResult(object):
-    def __init__(self, file_name, column_spec='1:2', comment_chars='#@', delimiter_chars=' \t'):
+    def __init__(self, file_name, column_spec='0:1', comment_chars='#@', delimiter_chars=' \t'):
         self.file_name = file_name
         self.column_spec = column_spec
         self.comment_chars = comment_chars
         self.delimiter_chars = delimiter_chars
 
         # extract column indices and verify their number
-        self.column_indices = self.column_spec.split(':')
-        n_indices = len(self.column_indices)
-        if n_indices<2 or n_indices>4:
+        self.column_indices = map(int, self.column_spec.split(':'))
+        self.n_indices = len(self.column_indices)
+        if self.n_indices<2 or self.n_indices>4:
             raise ValueError('column_indices must contain 2, 3 or 4 indices')
+
+        self.dtype = float
 
     def result(self):
         xs = list()
@@ -310,22 +329,22 @@ class CSVResult(object):
                 non_comment = line[:comment_index]
 
                 # split the string
-                splitted = re.split(self.delimiter_chars, non_comment)
+                splitted = re.split('[' + self.delimiter_chars + ']+', non_comment)
 
                 # skip blank lines
                 if not splitted:
                     continue
 
                 try:
-                    x = splitted[self.column_indices[0]]
-                    y = splitted[self.column_indices[1]]
+                    x = self.dtype(splitted[self.column_indices[0]])
+                    y = self.dtype(splitted[self.column_indices[1]])
                     xs += [x]
                     ys += [y]
-                    if n_indices>=3:
-                        ey = splitted[self.column_indices[2]]
+                    if self.n_indices>=3:
+                        ey = self.dtype(splitted[self.column_indices[2]])
                         eys += [ey]
-                        if n_indices==4:
-                            ex = splitted[self.column_indices[3]]
+                        if self.n_indices==4:
+                            ex = self.dtype(splitted[self.column_indices[3]])
                             exs += [ex]
                 except IndexError as error:
                     error.args = ('Column specification out of range. Check your column_spec argument. I choked on this line:\n' + line, )
@@ -335,13 +354,13 @@ class CSVResult(object):
                 raise Exception('Inconsistent lengths of x/y/ey/ex arrays')
             xarr = np.array(xs)
             yarr = np.array(ys)
-            eyarr = np.array(eyarr) if eys else None
-            exarr = np.array(exarr) if exs else None
+            eyarr = np.array(eys) if eys else None
+            exarr = np.array(exs) if exs else None
             result = Result(
                     edges=xarr,
                     contents=yarr,
                     errors=eyarr,
                     xerrors=exarr
                     )
-            return self.result
+            return result
 
