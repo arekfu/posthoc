@@ -8,18 +8,23 @@ import warnings
 
 ResultTuple = namedtuple('ResultTuple', ['edges', 'contents', 'errors', 'xerrors'])
 
+tolerance = None
+
 class Result(ResultTuple):
     def _check_consistency_edges(self, other):
         try:
             diff = np.abs(self.edges - other.edges)
         except ValueError:
-            raise SourceError('ResultTuple edges have different sizes.')
-        tolerance = 10. * np.maximum(
+            raise Exception('ResultTuple edges have different sizes.')
+        if tolerance:
+            tol = tolerance
+        else:
+            tol = 10. * np.maximum(
                 np.finfo(self.edges.dtype).eps,
                 np.finfo(other.edges.dtype).eps
                 )
-        if np.amax(diff)>tolerance:
-            raise SourceError('ResultTuples have incompatible edges.')
+        if np.amax(diff)>tol:
+            raise Exception('ResultTuples have incompatible edges: ' + str(diff))
 
         if self.xerrors is None or other.xerrors is None:
             return
@@ -27,9 +32,9 @@ class Result(ResultTuple):
         try:
             diff = np.abs(self.xerrors - other.xerrors)
         except ValueError:
-            raise SourceError('ResultTuple xerrors have different sizes.')
-        if np.amax(diff)>tolerance:
-            raise SourceError('ResultTuple have incompatible xerrors.')
+            raise Exception('ResultTuple xerrors have different sizes.')
+        if np.amax(diff)>tol:
+            raise Exception('ResultTuple have incompatible xerrors.')
 
     def __add__(self, other):
         self._check_consistency_edges(other)
