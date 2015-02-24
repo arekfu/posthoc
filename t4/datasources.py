@@ -14,6 +14,12 @@ class DataSource(object):
     pass
 
 def to_datasource(item):
+    """Convert the argument into a datasource.
+
+    This function performs some black magic to guess what type of DataSource
+    the input should be converted to.
+    """
+
     if isinstance(item, DataSource):
         return item
     else:
