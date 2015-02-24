@@ -2,7 +2,7 @@
 
 import matplotlib.pyplot as plt
 
-class Plotter:
+class Plotter(object):
     def __init__(self):
         self.set_axes()
 

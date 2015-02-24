@@ -98,7 +98,7 @@ class Result(ResultTuple):
             return Result(edges, contents, errors, xerrors)
 
 
-class XMLResult:
+class XMLResult(object):
     """Extract data from the Tripoli-4® output file.
 
     This class is responsible for extracting the calculation results, grids,
@@ -281,7 +281,7 @@ class XMLResult:
             xlabel = 'energy (MeV)'
         return xlabel, ylabel
 
-class CSVResult:
+class CSVResult(object):
     def __init__(self, file_name, column_spec='1:2', comment_chars='#@', delimiter_chars=' \t'):
         self.file_name = file_name
         self.column_spec = column_spec
