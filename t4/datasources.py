@@ -2,6 +2,8 @@
 
 from results import XMLResult, CSVResult
 from collections import Mapping
+import copy
+import numpy as np
 
 class SourceError(Exception):
     """A customized Exception."""
@@ -10,8 +12,46 @@ class SourceError(Exception):
     def __str__(self):
         return repr(self.value)
 
+
 class DataSource(object):
-    pass
+    """Base class for all the DataSource types."""
+
+    def __add__(self, other):
+        add = copy.deepcopy(self)
+        add.result += other.result
+        return add
+
+    def __iadd__(self, other):
+        self.result += other.result
+        return self
+
+    def __sub__(self, other):
+        sub = copy.deepcopy(self)
+        sub -= other
+        return sub
+
+    def __isub__(self, other):
+        self.result -= other.result
+        return self
+
+    def __mul__(self, other):
+        mul = copy.deepcopy(self)
+        mul *= other
+        return mul
+
+    def __imul__(self, other):
+        self.result *= other.result
+        return self
+
+    def __div__(self, other):
+        div = copy.deepcopy(self)
+        div /= other
+        return div
+
+    def __idiv__(self, other):
+        self.result /= other.result
+        return self
+
 
 def to_datasource(item):
     """Convert the argument into a datasource.
@@ -24,6 +64,7 @@ def to_datasource(item):
         return item
     else:
         raise Exception('Not implemented yet')
+
 
 class XMLDataSource(DataSource):
     """Represents a T4 XML output file as a data source."""

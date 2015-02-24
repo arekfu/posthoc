@@ -3,8 +3,100 @@
 import numpy as np
 from collections import namedtuple
 import re
+import copy
+import warnings
 
-ResultTuple = namedtuple('Result', ['edges', 'contents', 'errors', 'xerrors'])
+ResultTuple = namedtuple('ResultTuple', ['edges', 'contents', 'errors', 'xerrors'])
+
+class Result(ResultTuple):
+    def _check_consistency_edges(self, other):
+        try:
+            diff = np.abs(self.edges - other.edges)
+        except ValueError:
+            raise SourceError('ResultTuple edges have different sizes.')
+        tolerance = 10. * np.maximum(
+                np.finfo(self.edges.dtype).eps,
+                np.finfo(other.edges.dtype).eps
+                )
+        if np.amax(diff)>tolerance:
+            raise SourceError('ResultTuples have incompatible edges.')
+
+        if self.xerrors is None or other.xerrors is None:
+            return
+
+        try:
+            diff = np.abs(self.xerrors - other.xerrors)
+        except ValueError:
+            raise SourceError('ResultTuple xerrors have different sizes.')
+        if np.amax(diff)>tolerance:
+            raise SourceError('ResultTuple have incompatible xerrors.')
+
+    def __add__(self, other):
+        self._check_consistency_edges(other)
+        edges = copy.deepcopy(self.edges)
+        xerrors = copy.deepcopy(self.xerrors)
+        contents = self.contents + other.contents
+        if not self.errors is None and not other.errors is None:
+            errors = np.sqrt(self.errors**2 + other.errors**2)
+        elif not other.errors is None:
+            errors = copy.deepcopy(other.errors)
+        else:
+            errors = copy.deepcopy(self.errors)
+        return Result(edges, contents, errors, xerrors)
+
+    def __sub__(self, other):
+        self._check_consistency_edges(other)
+        edges = copy.deepcopy(self.edges)
+        xerrors = copy.deepcopy(self.xerrors)
+        contents = self.contents - other.contents
+        if not self.errors is None and not other.errors is None:
+            errors = np.sqrt(self.errors**2 + other.errors**2)
+        elif not other.errors is None:
+            errors = copy.deepcopy(other.errors)
+        else:
+            errors = copy.deepcopy(self.errors)
+        return Result(edges, contents, errors, xerrors)
+
+    def __mul__(self, other):
+        self._check_consistency_edges(other)
+        edges = copy.deepcopy(self.edges)
+        xerrors = copy.deepcopy(self.xerrors)
+        contents = self.contents * other.contents
+        if not self.errors is None and not other.errors is None:
+            errors = np.sqrt((self.contents*other.errors)**2 + (self.errors*other.contents)**2)
+        elif not other.errors is None:
+            errors = self.contents*other.errors
+        elif not self.errors is None:
+            errors = self.errors*other.contents
+        else:
+            errors = None
+        return Result(edges, contents, errors, xerrors)
+
+    def __div__(self, other):
+        with warnings.catch_warnings():
+            # we ignore warnings from div-by-zero
+            warnings.filterwarnings('ignore', 'invalid value', RuntimeWarning)
+
+            self._check_consistency_edges(other)
+            edges = copy.deepcopy(self.edges)
+            xerrors = copy.deepcopy(self.xerrors)
+            contents = self.contents/other.contents
+            if not self.errors is None and not other.errors is None:
+                errors = np.nan_to_num(
+                        contents * np.sqrt((self.errors/self.contents)**2 + (other.errors/other.contents)**2)
+                        )
+            elif not other.errors is None:
+                errors = np.nan_to_num(
+                        contents * other.errors / other.contents
+                        )
+            elif not self.errors is None:
+                errors = np.nan_to_num(
+                        self.errors / other.contents
+                        )
+            else:
+                errors = None
+            return Result(edges, contents, errors, xerrors)
+
 
 class XMLResult:
     """Extract data from the Tripoli-4® output file.
@@ -120,7 +212,7 @@ class XMLResult:
             width = np.ediff1d(grid)
             result /= width
         result = np.append(result, [self.dtype(0)])
-        return ResultTuple(edges=grid, contents=result, errors=None, xerrors=None)
+        return Result(edges=grid, contents=result, errors=None, xerrors=None)
 
     def mean_results_xml(self, batch_num='last'):
         if batch_num=='last':
@@ -170,7 +262,7 @@ class XMLResult:
             sd /= width
         val = np.append(val, [self.dtype(0)])
         sd = np.append(sd, [self.dtype(0)])
-        return ResultTuple(edges=grid, contents=val, errors=sd, xerrors=None)
+        return Result(edges=grid, contents=val, errors=sd, xerrors=None)
 
     def labels(self, score_name):
         """Suggest axis labels for the given score."""
@@ -245,7 +337,7 @@ class CSVResult:
             yarr = np.array(ys)
             eyarr = np.array(eyarr) if eys else None
             exarr = np.array(exarr) if exs else None
-            result = ResultTuple(
+            result = Result(
                     edges=xarr,
                     contents=yarr,
                     errors=eyarr,
