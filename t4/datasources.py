@@ -52,6 +52,9 @@ class DataSource(object):
         self.result /= other.result
         return self
 
+    def copy(self):
+        return copy.deepcopy(self)
+
 
 def to_datasource(item):
     """Convert the argument into a datasource.
