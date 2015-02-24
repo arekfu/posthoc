@@ -12,5 +12,5 @@ ttb_ds = XMLDataSource(directory + 'ttb/ttb.t4.xml', 'photon_spectrum', divide_b
 no_ttb_ds = XMLDataSource(directory + 'no_ttb/no_ttb.t4.xml', 'photon_spectrum', divide_by_bin=False)
 mcnp_ds = CSVDataSource(directory + 'mcnp/mcnp_bin_norm.dat', '0:1:2', linestyle='none', marker='o')
 
-pm.energy_score([photon_ds, ttb_ds, no_ttb_ds, mcnp_ds])
+pm.draw([photon_ds, ttb_ds, no_ttb_ds, mcnp_ds])
 

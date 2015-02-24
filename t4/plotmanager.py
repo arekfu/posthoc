@@ -10,7 +10,7 @@ class PlotManager(object):
     def __init__(self):
         self.plotter = Plotter()
 
-    def energy_score(self, to_plot, axes=None, xscale='linear', yscale='log', **kwargs):
+    def draw(self, to_plot, axes=None, xscale='linear', yscale='log', **kwargs):
         if not axes:
             axes = plt.axes(xscale=xscale, yscale=yscale, **kwargs)
         self.plotter.set_axes(axes)
