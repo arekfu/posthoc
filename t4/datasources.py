@@ -13,7 +13,7 @@ class SourceError(Exception):
 class DataSource(object):
     pass
 
-def get_datasource(item):
+def to_datasource(item):
     if isinstance(item, DataSource):
         return item
     else:

@@ -17,7 +17,7 @@ class PlotManager(object):
 
         xlabel = ylabel = ''
         for item in to_plot:
-            ds = datasources.get_datasource(item)
+            ds = datasources.to_datasource(item)
             self.plotter.draw_step(ds)
 
             if not xlabel:
