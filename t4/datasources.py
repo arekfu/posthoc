@@ -69,7 +69,7 @@ def to_datasource(item):
 class XMLDataSource(DataSource):
     """Represents a T4 XML output file as a data source."""
 
-    def __init__(self, file_name, score_name, batch_num='last', divide_by_bin=True, **options):
+    def __init__(self, file_name, score_name, label=None, batch_num='last', divide_by_bin=True, **options):
         """Initialize the data source from an XML file.
 
         Arguments:
@@ -77,6 +77,7 @@ class XMLDataSource(DataSource):
         score_name -- name of the T4 score (string)
 
         Keyword arguments:
+        label -- a label for the data source
         batch_num -- the number of the batch.
         divide_by_bin -- whether the score result should be divided by the bin
         size.
@@ -104,6 +105,8 @@ class XMLDataSource(DataSource):
 
         self.xlabel, self.ylabel = xml_result.labels(score_name)
 
+        self.label = label if label else score_name
+
 class CSVDataSource(DataSource):
     """Represents a CSV text file as a data source."""
 
@@ -113,6 +116,7 @@ class CSVDataSource(DataSource):
             column_spec='0:1',
             xlabel=None,
             ylabel=None,
+            label=None,
             comment_chars='#@',
             delimiter_chars=' \t',
             **options):
@@ -126,6 +130,7 @@ class CSVDataSource(DataSource):
         with the following format: 'x:y[:ey[:ex]]'
         xlabel -- label for the x-axis
         ylabel -- label for the y-axis
+        label -- label for the data source
         comment_chars -- list of characters that introduce comments
         delimiter_chars -- list of delimiter characters
         options -- any additional options (used for plotting)
@@ -150,3 +155,4 @@ class CSVDataSource(DataSource):
 
         self.xlabel = xlabel
         self.ylabel = ylabel
+        self.label = label

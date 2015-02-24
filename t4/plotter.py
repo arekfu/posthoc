@@ -20,7 +20,14 @@ class Plotter(object):
             del step_args['marker']
         if 'drawstyle' in step_args:
             del step_args['drawstyle']
-        step_artist, = self.axes.plot(result.edges, result.contents, drawstyle='steps-post', marker=None, **step_args)
+        step_artist, = self.axes.plot(
+                result.edges,
+                result.contents,
+                drawstyle='steps-post',
+                marker=None,
+                label=data_source.label,
+                **step_args
+                )
         centers = 0.5*(result.edges[1:]+result.edges[:-1])
 
         errorbar_args = data_source.kwargs.copy()
@@ -33,5 +40,12 @@ class Plotter(object):
             yerr = result.errors[:-1]
         except TypeError:
             yerr = None
-        errorbar_artists = self.axes.errorbar(centers, result.contents[:-1], yerr=yerr, linestyle='none', **errorbar_args)
+        errorbar_artists = self.axes.errorbar(
+                centers,
+                result.contents[:-1],
+                yerr=yerr,
+                fmt='none',
+                label=data_source.label,
+                **errorbar_args
+                )
 
