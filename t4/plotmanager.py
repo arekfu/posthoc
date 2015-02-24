@@ -23,9 +23,9 @@ class PlotManager(object):
             if not ylabel:
                 ylabel = ds.ylabel
 
-        plt.gca().set_xlabel(xlabel)
-        plt.gca().set_ylabel(ylabel)
-        plt.gca().set_xscale(xscale)
-        plt.gca().set_yscale(yscale)
-        plt.legend(self.plotter.handles, self.plotter.labels)
+        axes.set_xlabel(xlabel)
+        axes.set_ylabel(ylabel)
+        axes.set_xscale(xscale)
+        axes.set_yscale(yscale)
+        axes.legend(self.plotter.handles, self.plotter.labels)
 
