@@ -3,8 +3,10 @@
 import matplotlib.pyplot as plt
 
 class Plotter(object):
-    def __init__(self):
-        self.set_axes()
+    def __init__(self, axes=None):
+        self.set_axes(axes)
+        self.handles = list()
+        self.labels = list()
 
     def set_axes(self, axes=None):
         if axes:
@@ -25,7 +27,7 @@ class Plotter(object):
                 result.contents,
                 drawstyle='steps-post',
                 marker=None,
-                label=data_source.label,
+                label=None,
                 **step_args
                 )
         centers = 0.5*(result.edges[1:]+result.edges[:-1])
@@ -44,8 +46,11 @@ class Plotter(object):
                 centers,
                 result.contents[:-1],
                 yerr=yerr,
-                fmt='none',
-                label=data_source.label,
+                linestyle = 'None',
+                label=None,
                 **errorbar_args
                 )
+
+        self.handles += [(step_artist, errorbar_artists)]
+        self.labels += [data_source.label]
 

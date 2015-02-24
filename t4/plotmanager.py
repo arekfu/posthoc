@@ -29,6 +29,6 @@ class PlotManager(object):
         plt.gca().set_ylabel(ylabel)
         plt.gca().set_xscale(xscale)
         plt.gca().set_yscale(yscale)
-        plt.legend()
+        plt.legend(self.plotter.handles, self.plotter.labels)
         plt.draw()
 
