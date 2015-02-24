@@ -4,16 +4,9 @@ import matplotlib.pyplot as plt
 
 class Plotter(object):
     def __init__(self, axes=None):
-        self.set_axes(axes)
+        self.axes = axes
         self.handles = list()
         self.labels = list()
-
-    def set_axes(self, axes=None):
-        if axes:
-            self.axes = axes
-            self.axes.set_color_cycle(None)
-        else:
-            self.axes = plt.axes()
 
     def draw(self, data_source):
         step = data_source.kwargs.get('steps', False)
