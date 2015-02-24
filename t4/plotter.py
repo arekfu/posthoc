@@ -15,6 +15,13 @@ class Plotter(object):
         else:
             self.axes = plt.axes()
 
+    def draw(self, data_source):
+        step = data_source.kwargs.get('steps', False)
+        if step:
+            self.draw_step(data_source)
+        else:
+            self.draw_line(data_source)
+
     def draw_step(self, data_source):
         result = data_source.result
         step_args = data_source.kwargs.copy()
@@ -52,5 +59,24 @@ class Plotter(object):
                 )
 
         self.handles += [(step_artist, errorbar_artists)]
+        self.labels += [data_source.label]
+
+    def draw_line(self, data_source):
+        result = data_source.result
+        args = data_source.kwargs.copy()
+        centers = 0.5*(result.edges[1:]+result.edges[:-1])
+        try:
+            yerr = result.errors[:-1]
+        except TypeError:
+            yerr = None
+        artist = self.axes.errorbar(
+                centers,
+                result.contents[:-1],
+                yerr=yerr,
+                label=None,
+                **args
+                )
+
+        self.handles += [artist]
         self.labels += [data_source.label]
 
