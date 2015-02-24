@@ -2,6 +2,7 @@
 
 from t4.plotmanager import PlotManager
 from t4.datasources import XMLDataSource, CSVDataSource
+import matplotlib.pyplot as plt
 
 pm = PlotManager()
 
@@ -14,3 +15,4 @@ mcnp_ds = CSVDataSource(directory + 'mcnp/mcnp_bin_norm.dat', '0:1:2', linestyle
 
 pm.draw([photon_ds, ttb_ds, no_ttb_ds, mcnp_ds])
 
+plt.show()

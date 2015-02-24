@@ -4,8 +4,6 @@ import matplotlib.pyplot as plt
 from plotter import Plotter
 import datasources
 
-plt.ion()
-
 class PlotManager(object):
     def __init__(self):
         self.plotter = Plotter()
