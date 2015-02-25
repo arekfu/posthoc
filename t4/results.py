@@ -6,6 +6,7 @@ import copy
 import warnings
 
 tolerance = None
+dtype = float
 
 class Result:
     def __init__(self, edges=None, contents=None, errors=None, xerrors=None):
@@ -122,6 +123,36 @@ class Result:
         xerrors = self.xerrors[key] if not self.xerrors is None else None
         return Result(edges=edges, contents=contents, errors=errors, xerrors=xerrors)
 
+    def rebin(self, nbins, mean=True):
+        n = len(self.edges)
+        n1 = n-1
+        edges = self.edges[::nbins]
+        if mean:
+            contents = self.contents[:-1].reshape(n1//nbins, nbins).mean(axis=1)
+        else:
+            contents = self.contents[:-1].reshape(n1//nbins, nbins).sum(axis=1)
+        contents = np.append(contents, [dtype(0)])
+
+        if not self.xerrors is None:
+            if mean:
+                xerrors = np.sqrt((self.xerrors[:-1].reshape(n1//nbins, nbins)**2).mean(axis=1))
+            else:
+                xerrors = np.sqrt((self.xerrors[:-1].reshape(n1//nbins, nbins)**2).sum(axis=1))
+            xerrors = np.append(xerrors, [dtype(0)])
+        else:
+            xerrors = None
+
+        if not self.errors is None:
+            if mean:
+                errors = np.sqrt((self.errors[:-1].reshape(n1//nbins, nbins)**2).mean(axis=1))
+            else:
+                errors = np.sqrt((self.errors[:-1].reshape(n1//nbins, nbins)**2).sum(axis=1))
+            errors = np.append(errors, [dtype(0)])
+        else:
+            errors = None
+
+        return Result(edges=edges, contents=contents, errors=errors, xerrors=xerrors)
+
 class XMLResult(object):
     """Extract data from the Tripoli-4® output file.
 
@@ -138,7 +169,6 @@ class XMLResult(object):
         from bs4 import BeautifulSoup
         with open(fname) as f:
             self.soup = BeautifulSoup(f.read(), 'lxml')
-        self.dtype = float
 
     def _list_from_iterable_attr(self, iterable, attr):
         return [ s[attr] for s in iterable ]
@@ -160,7 +190,7 @@ class XMLResult(object):
         name -- the name of the grid
         """
         gridxml = self.grid_xml(name=name)
-        grid = np.fromstring(gridxml.string, sep=' ', dtype=self.dtype)
+        grid = np.fromstring(gridxml.string, sep=' ', dtype=dtype)
         return grid
 
     def grid_names(self):
@@ -228,14 +258,14 @@ class XMLResult(object):
         score_grid_name = score['nrj_dec']
         score_div_value_str = score.gelement_def['div_value']
         if score_div_value_str:
-            score_div_value = self.dtype(score_div_value_str)
+            score_div_value = dtype(score_div_value_str)
         else:
             score_div_value = None
         grid = self.grid(score_grid_name)
         score_id = score['id']
         results = self.batch_results_xml(batch_num)
         resultxml = results.find('result', scoreid=score_id).gelement
-        result = np.fromstring(resultxml.string, sep=' ', dtype=self.dtype)
+        result = np.fromstring(resultxml.string, sep=' ', dtype=dtype)
         # divide by the bin width if requested
         if divide_by_bin:
             width = np.ediff1d(grid)
@@ -243,7 +273,7 @@ class XMLResult(object):
         # divide by the value in the XML tree
         if score_div_value:
             result /= score_div_value
-        result = np.append(result, [self.dtype(0)])
+        result = np.append(result, [dtype(0)])
         return Result(edges=grid, contents=result, errors=None, xerrors=None)
 
     def mean_results_xml(self, batch_num='last'):
@@ -281,17 +311,17 @@ class XMLResult(object):
         score_grid_name = score['nrj_dec']
         score_div_value_str = score.gelement_def['div_value']
         if score_div_value_str:
-            score_div_value = self.dtype(score_div_value_str)
+            score_div_value = dtype(score_div_value_str)
         else:
             score_div_value = None
         grid = self.grid(score_grid_name)
         score_id = score['id']
         results = self.mean_results_xml(batch_num)
         resultxml = results.find('mean_result', scoreid=score_id).gelement
-        val_list = [ self.dtype(v.string) for v in resultxml.find_all('val') ]
-        sd_list = [ self.dtype(v.string) for v in resultxml.find_all('sd') ]
-        val = np.array(val_list, dtype=self.dtype)
-        sd = np.array(sd_list, dtype=self.dtype)
+        val_list = [ dtype(v.string) for v in resultxml.find_all('val') ]
+        sd_list = [ dtype(v.string) for v in resultxml.find_all('sd') ]
+        val = np.array(val_list, dtype=dtype)
+        sd = np.array(sd_list, dtype=dtype)
         # divide by the bin width if requested
         self.divide_by_bin = divide_by_bin
         if self.divide_by_bin:
@@ -302,8 +332,8 @@ class XMLResult(object):
         if score_div_value:
             val /= score_div_value
             sd /= score_div_value
-        val = np.append(val, [self.dtype(0)])
-        sd = np.append(sd, [self.dtype(0)])
+        val = np.append(val, [dtype(0)])
+        sd = np.append(sd, [dtype(0)])
         return Result(edges=grid, contents=val, errors=sd, xerrors=None)
 
     def labels(self, score_name):
@@ -346,8 +376,6 @@ class CSVResult(object):
         if self.n_indices<2 or self.n_indices>4:
             raise ValueError('column_indices must contain 2, 3 or 4 indices')
 
-        self.dtype = float
-
     def result(self):
         xs = list()
         ys = list()
@@ -371,15 +399,15 @@ class CSVResult(object):
                     continue
 
                 try:
-                    x = self.dtype(splitted[self.column_indices[0]])
-                    y = self.dtype(splitted[self.column_indices[1]])
+                    x = dtype(splitted[self.column_indices[0]])
+                    y = dtype(splitted[self.column_indices[1]])
                     xs += [x]
                     ys += [y]
                     if self.n_indices>=3:
-                        ey = self.dtype(splitted[self.column_indices[2]])
+                        ey = dtype(splitted[self.column_indices[2]])
                         eys += [ey]
                         if self.n_indices==4:
-                            ex = self.dtype(splitted[self.column_indices[3]])
+                            ex = dtype(splitted[self.column_indices[3]])
                             exs += [ex]
                 except IndexError as error:
                     error.args = ('Column specification out of range. Check your column_spec argument. I choked on this line:\n' + line, )

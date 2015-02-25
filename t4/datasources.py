@@ -60,6 +60,8 @@ class DataSource(object):
         new.result = new.result[key]
         return new
 
+    def rebin(self, nbins):
+        self.result = self.result.rebin(nbins)
 
 def to_datasource(item):
     """Convert the argument into a datasource.
