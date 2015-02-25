@@ -38,7 +38,7 @@ no_ttb_no_e = XMLDataSource(
         directory + 'no_ttb_no_e/no_ttb_no_e.t4.xml',
         'photon_spectrum',
         divide_by_bin=False,
-        label='T4 no $e^+$/$e^-$',
+        label=r'T4 no $\mathrm{e}^+$/$\mathrm{e}^-$',
         marker='D',
         color='blue',
         linestyle='-.'
@@ -105,6 +105,11 @@ pm.draw([ttb_over_full, mcnp_ttb_over_full], axes=ax[1,0], yscale='linear')
 
 pm.draw([t4_over_mcnp_full, t4_over_mcnp_ttb], axes=ax[1,1], yscale='linear')
 
-fig.tight_layout()
+ax[1,0].grid(axis='y')
+ax[1,1].grid(axis='y')
 
-plt.show()
+fig.tight_layout(h_pad=0, w_pad=0, pad=0.2)
+# alternatively:
+# fig.subplots_adjust(hspace=0, wspace=0)
+
+fig.savefig('test_plot.pdf')
