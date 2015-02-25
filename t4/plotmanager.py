@@ -8,7 +8,7 @@ class PlotManager(object):
     def __init__(self):
         self.axes_plotter = dict()
 
-    def draw(self, to_plot, axes=None, xscale='linear', yscale='log', **kwargs):
+    def draw(self, to_plot, axes=None, xscale='linear', yscale='log', legend=True, **kwargs):
         if not axes:
             axes = plt.axes(xscale=xscale, yscale=yscale, **kwargs)
         if axes in self.axes_plotter:
@@ -31,5 +31,6 @@ class PlotManager(object):
         axes.set_ylabel(ylabel)
         axes.set_xscale(xscale)
         axes.set_yscale(yscale)
-        axes.legend(plotter.handles, plotter.labels)
+        if legend:
+            axes.legend(plotter.handles, plotter.labels)
 
