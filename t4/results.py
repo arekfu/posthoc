@@ -1,16 +1,29 @@
 # coding: utf-8
 
 import numpy as np
-from collections import namedtuple
 import re
 import copy
 import warnings
 
-ResultTuple = namedtuple('ResultTuple', ['edges', 'contents', 'errors', 'xerrors'])
-
 tolerance = None
 
-class Result(ResultTuple):
+class Result:
+    def __init__(self, edges=None, contents=None, errors=None, xerrors=None):
+        self.edges=edges
+        self.contents=contents
+        self.errors=errors
+        self.xerrors=xerrors
+
+    def __str__(self):
+        return '(' \
+                + str(self.edges) + ', ' \
+                + str(self.contents) + ', ' \
+                + str(self.errors) + ', ' \
+                + str(self.xerrors) + ')'
+
+    def __repr__(self):
+        return str(self)
+
     def _check_consistency_edges(self, other):
         try:
             diff = np.abs(self.edges - other.edges)
@@ -102,6 +115,12 @@ class Result(ResultTuple):
                 errors = None
             return Result(edges, contents, errors, xerrors)
 
+    def __getitem__(self, key):
+        edges = self.edges[key]
+        contents = self.contents[key]
+        errors = self.errors[key] if not self.errors is None else None
+        xerrors = self.xerrors[key] if not self.xerrors is None else None
+        return Result(edges=edges, contents=contents, errors=errors, xerrors=xerrors)
 
 class XMLResult(object):
     """Extract data from the Tripoli-4® output file.

@@ -55,6 +55,11 @@ class DataSource(object):
     def copy(self):
         return copy.deepcopy(self)
 
+    def __getitem__(self, key):
+        new = self.copy()
+        new.result = new.result[key]
+        return new
+
 
 def to_datasource(item):
     """Convert the argument into a datasource.
