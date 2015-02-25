@@ -293,7 +293,8 @@ class XMLResult(object):
         val = np.array(val_list, dtype=self.dtype)
         sd = np.array(sd_list, dtype=self.dtype)
         # divide by the bin width if requested
-        if divide_by_bin:
+        self.divide_by_bin = divide_by_bin
+        if self.divide_by_bin:
             width = np.ediff1d(grid)
             val /= width
             sd /= width
@@ -313,13 +314,23 @@ class XMLResult(object):
         response = self.response_xml(id=response_id)
         particle = response['particle'].lower()
         response_type = response['type'].lower()
-        ylabel = particle + ' ' + response_type
+        score_div_value_str = score.gelement_def['div_value']
+        unit = 'source'
+        if score_div_value_str:
+            unit += ' cm$^2$'
+        if self.divide_by_bin:
+            unit += ' MeV'
+        if ' ' in unit:
+            unit = '[1/(' + unit + ')]'
+        else:
+            unit = '[1/' + unit + ']'
+        ylabel = particle + ' ' + response_type + ' ' + unit
         if 'tps_dec' in score.attrs:
             xlabel = 'time'
         elif 'mu_dec' in score.attrs:
             xlabel = '$\mu$'
         else:
-            xlabel = 'energy (MeV)'
+            xlabel = 'energy [MeV]'
         return xlabel, ylabel
 
 class CSVResult(object):
