@@ -18,10 +18,7 @@ class Plotter(object):
     def draw_step(self, data_source):
         result = data_source.result
         step_args = data_source.kwargs.copy()
-        if 'marker' in step_args:
-            del step_args['marker']
-        if 'drawstyle' in step_args:
-            del step_args['drawstyle']
+        self.strip_from_dict(step_args, ['steps', 'errorbars', 'drawstyle', 'marker'])
         step_artist, = self.axes.plot(
                 result.edges,
                 result.contents,
@@ -73,3 +70,7 @@ class Plotter(object):
         self.handles += [artist]
         self.labels += [data_source.label]
 
+    def strip_from_dict(self, d, keys):
+        for key in keys:
+            if key in d:
+                del d[key]
