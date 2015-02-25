@@ -10,7 +10,8 @@ class PlotManager(object):
 
     def draw(self, to_plot, axes=None, xscale='linear', yscale='log', legend=True, **kwargs):
         if not axes:
-            axes = plt.axes(xscale=xscale, yscale=yscale, **kwargs)
+            figure = plt.Figure()
+            axes = figure.add_axes(xscale=xscale, yscale=yscale, **kwargs)
         if axes in self.axes_plotter:
             plotter = self.axes_plotter[axes]
         else:
@@ -34,3 +35,4 @@ class PlotManager(object):
         if legend:
             axes.legend(plotter.handles, plotter.labels)
 
+        return axes
