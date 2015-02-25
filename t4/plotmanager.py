@@ -33,6 +33,6 @@ class PlotManager(object):
         axes.set_xscale(xscale)
         axes.set_yscale(yscale)
         if legend:
-            axes.legend(plotter.handles, plotter.labels)
+            axes.legend(plotter.handles, plotter.labels, labelspacing=0.05)
 
         return axes
