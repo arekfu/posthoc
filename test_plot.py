@@ -81,13 +81,13 @@ mcnp_ttb_over_full.kwargs['color']='k'
 mcnp_ttb_over_full.kwargs['linestyle']='--'
 mcnp_ttb_over_full.ylabel='ratio'
 
-t4_over_mcnp_full = no_ttb/mcnp
+t4_over_mcnp_full = no_ttb[1:]/mcnp
 t4_over_mcnp_full.label = 'T4/MCNP full'
 t4_over_mcnp_full.kwargs['color']='k'
 t4_over_mcnp_full.kwargs['linestyle']='--'
 t4_over_mcnp_full.ylabel='ratio'
 
-t4_over_mcnp_ttb = ttb/mcnp_ttb
+t4_over_mcnp_ttb = ttb[1:]/mcnp_ttb
 t4_over_mcnp_ttb.label = 'T4/MCNP TTB'
 t4_over_mcnp_ttb.kwargs['color']='r'
 t4_over_mcnp_ttb.kwargs['linestyle']='-'
