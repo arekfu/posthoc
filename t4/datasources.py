@@ -64,8 +64,8 @@ class DataSource(object):
         new.result = new.result[key]
         return new
 
-    def rebin(self, nbins):
-        self.result = self.result.rebin(nbins)
+    def rebin(self, nbins, mean=True):
+        self.result = self.result.rebin(nbins, mean)
 
     def null(self):
         self.result = Result()
