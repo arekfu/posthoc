@@ -4,6 +4,10 @@ from results import XMLResult, CSVResult
 from collections import Mapping
 import copy
 import numpy as np
+import logging
+
+# set up logging
+logger = logging.getLogger(__name__)
 
 class SourceError(Exception):
     """A customized Exception."""
