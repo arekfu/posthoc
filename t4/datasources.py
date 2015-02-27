@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from results import XMLResult, CSVResult
+from results import XMLResult, CSVResult, Result
 from collections import Mapping
 import copy
 import numpy as np
@@ -67,6 +67,10 @@ class DataSource(object):
     def rebin(self, nbins):
         self.result = self.result.rebin(nbins)
 
+    def null(self):
+        self.result = Result()
+        self.xlabel = self.ylabel = self.label = None
+
 def to_datasource(item):
     """Convert the argument into a datasource.
 
@@ -109,17 +113,24 @@ class XMLDataSource(DataSource):
         else:
             self.kwargs = dict()
 
-        # Here we assume file_name is a valid, well-formed T4 output file
-        xml_result = XMLResult(file_name)
-        self.result = xml_result.mean_result(
-                score_name,
-                batch_num=batch_num,
-                divide_by_bin=divide_by_bin
-                )
+        # Here we hope that file_name is a valid, well-formed T4 output file
+        try:
+            logger.debug('Trying to open %s as an XMLResult', file_name)
+            xml_result = XMLResult(file_name)
+        except Exception as e:
+            logger.error('Fail: could not open %s as an XMLResult: %s', file_name, e.args)
+            self.null()
+        else:
+            logger.debug('Success: opened %s as an XMLResult', file_name)
+            self.result = xml_result.mean_result(
+                    score_name,
+                    batch_num=batch_num,
+                    divide_by_bin=divide_by_bin
+                    )
 
-        self.xlabel, self.ylabel = xml_result.labels(score_name)
+            self.xlabel, self.ylabel = xml_result.labels(score_name)
 
-        self.label = label if label else score_name
+            self.label = label if label else score_name
 
 class CSVDataSource(DataSource):
     """Represents a CSV text file as a data source."""
@@ -159,14 +170,21 @@ class CSVDataSource(DataSource):
             self.kwargs = dict()
 
         # We create the CSVResult object
-        csv_result = CSVResult(
-                file_name,
-                column_spec=column_spec,
-                comment_chars=comment_chars,
-                delimiter_chars=delimiter_chars
-                )
-        self.result = csv_result.result()
+        try:
+            logger.debug('Trying to open %s as a CSVResult', file_name)
+            csv_result = CSVResult(
+                    file_name,
+                    column_spec=column_spec,
+                    comment_chars=comment_chars,
+                    delimiter_chars=delimiter_chars
+                    )
+        except Exception as e:
+            logger.error('Fail: could not open %s as an XMLResult: %s', file_name, e.args)
+            self.null()
+        else:
+            logger.debug('Success: opened %s as a CSVResult', file_name)
+            self.result = csv_result.result()
 
-        self.xlabel = xlabel
-        self.ylabel = ylabel
-        self.label = label
+            self.xlabel = xlabel
+            self.ylabel = ylabel
+            self.label = label
