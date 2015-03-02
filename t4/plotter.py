@@ -66,7 +66,6 @@ class Plotter(object):
                 yerr = None
         else:
             yerr = None
-        print yerr
         artist = self.axes.errorbar(
                 centers,
                 result.contents[:-1],
