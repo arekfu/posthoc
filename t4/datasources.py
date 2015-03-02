@@ -117,7 +117,7 @@ class XMLDataSource(DataSource):
         try:
             logger.debug('Trying to open %s as an XMLResult', file_name)
             xml_result = XMLResult(file_name)
-        except Exception as e:
+        except IOError as e:
             logger.error('Fail: could not open %s as an XMLResult: %s', file_name, e.args)
             self.null()
         else:
