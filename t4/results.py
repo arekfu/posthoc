@@ -1,9 +1,12 @@
 # coding: utf-8
 
 import numpy as np
-import re
 import copy
 import warnings
+import logging
+
+# set up logging
+logger = logging.getLogger(__name__)
 
 tolerance = None
 dtype = float
@@ -363,67 +366,66 @@ class XMLResult(object):
             xlabel = 'energy [MeV]'
         return xlabel, ylabel
 
-class CSVResult(object):
-    def __init__(self, file_name, column_spec='0:1', comment_chars='#@', delimiter_chars=' \t'):
+class TXTResult(object):
+    def __init__(self, file_name, parser):
         self.file_name = file_name
-        self.column_spec = column_spec
-        self.comment_chars = comment_chars
-        self.delimiter_chars = delimiter_chars
-
-        # extract column indices and verify their number
-        self.column_indices = map(int, self.column_spec.split(':'))
-        self.n_indices = len(self.column_indices)
-        if self.n_indices<2 or self.n_indices>4:
-            raise ValueError('column_indices must contain 2, 3 or 4 indices')
+        self.parser = parser
 
     def result(self):
         xs = list()
         ys = list()
         eys = list()
         exs = list()
+        n_tokens = None
         with open(self.file_name) as f:
             for line in f:
-                # the following line assigns to comment_index the index of the
-                # first comment character encountered in the splitted string
-                comment_index = next(
-                        (i for (i, char) in enumerate(line) for comment_char in self.comment_chars if char==comment_char),
-                        None
-                        )
-                non_comment = line[:comment_index]
+                parsed = self.parser(line)
 
-                # split the string
-                splitted = re.split('[' + self.delimiter_chars + ']+', non_comment)
+                logger.debug('Parsed line\n%s as %s', line, parsed)
 
-                # skip blank lines
-                if not splitted:
+                if not parsed:
                     continue
 
-                try:
-                    x = dtype(splitted[self.column_indices[0]])
-                    y = dtype(splitted[self.column_indices[1]])
-                    xs += [x]
-                    ys += [y]
-                    if self.n_indices>=3:
-                        ey = dtype(splitted[self.column_indices[2]])
-                        eys += [ey]
-                        if self.n_indices==4:
-                            ex = dtype(splitted[self.column_indices[3]])
-                            exs += [ex]
-                except IndexError as error:
-                    error.args = ('Column specification out of range. Check your column_spec argument. I choked on this line:\n' + line, )
-                    raise error
+                if n_tokens==None:
+                    n_tokens = len(parsed)
 
-            if len(xs) != len(ys) or (eys and len(ys)!=len(eys)) or (exs and len(exs)!=len(xs)):
-                raise Exception('Inconsistent lengths of x/y/ey/ex arrays')
-            xarr = np.array(xs)
-            yarr = np.array(ys)
-            eyarr = np.array(eys) if eys else None
-            exarr = np.array(exs) if exs else None
-            result = Result(
-                    edges=xarr,
-                    contents=yarr,
-                    errors=eyarr,
-                    xerrors=exarr
-                    )
-            return result
+                if len(parsed)!=n_tokens:
+                    raise Exception('Inconsistent number of fields (expected ' +
+                            str(n_tokens) + ') returned when parsing' +
+                            self.file_name + '\nThe problematic line was ' +
+                            line)
+
+                if n_tokens==2:
+                    x, y = parsed
+                elif n_tokens==3:
+                    x, y, ey = parsed
+                    eys += [ey]
+                elif n_tokens==4:
+                    x, y, ey, ex = parsed
+                    eys += [ey]
+                    exs += [ex]
+
+                xs += [x]
+                ys += [y]
+
+        if len(xs) != len(ys) or (eys and len(ys)!=len(eys)) or (exs and len(exs)!=len(xs)):
+            raise Exception('Inconsistent lengths of x/y/ey/ex arrays')
+
+        logger.debug('Parsing succeeded')
+        logger.debug('xs=%s', xs)
+        logger.debug('ys=%s', ys)
+        logger.debug('exs=%s', exs)
+        logger.debug('eys=%s', eys)
+
+        xarr = np.array(xs)
+        yarr = np.array(ys)
+        eyarr = np.array(eys) if eys else None
+        exarr = np.array(exs) if exs else None
+        result = Result(
+                edges=xarr,
+                contents=yarr,
+                errors=eyarr,
+                xerrors=exarr
+                )
+        return result
 
