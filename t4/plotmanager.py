@@ -25,7 +25,10 @@ class PlotManager(object):
         xlabel = ylabel = ''
         for item in to_plot:
             ds = datasources.to_datasource(item)
-            plotter.draw(ds)
+            try:
+                plotter.draw(ds)
+            except Exception as e:
+                logger.error('Cannot plot datasource: %s', e.args)
 
             if not xlabel:
                 xlabel = ds.xlabel
