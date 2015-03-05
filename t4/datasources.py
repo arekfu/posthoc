@@ -69,6 +69,9 @@ class DataSource(object):
     def rebin(self, nbins, mean=True):
         self.result = self.result.rebin(nbins, mean)
 
+    def rescale_x(self, factor, rescale_y=True):
+        self.result = self.result.rescale_x(factor, rescale_y)
+
     def null(self):
         self.result = Result()
         self.xlabel = self.ylabel = self.label = None

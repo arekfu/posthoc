@@ -156,6 +156,26 @@ class Result:
 
         return Result(edges=edges, contents=contents, errors=errors, xerrors=xerrors)
 
+    def rescale_x(self, factor, rescale_y=True):
+        """Apply a scale factor to the bin edges (and xerrors, if present).
+
+        Arguments:
+        factor -- the factor
+
+        Keyword arguments:
+        rescale_y: if True, apply 1/factor to contents and errors.
+        """
+
+        edges = self.edges * factor
+        xerrors = self.xerrors * factor if not self.xerrors is None else None
+        if rescale_y:
+            contents = self.contents / factor
+            errors = self.errors / factor if not self.errors is None else None
+
+        new_result = Result(edges=edges, contents=contents, errors=errors, xerrors=xerrors)
+        logger.debug('rescale_x: new result is %s', new_result)
+        return new_result
+
 class XMLResult(object):
     """Extract data from the Tripoli-4® output file.
 
