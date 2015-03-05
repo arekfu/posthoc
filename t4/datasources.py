@@ -88,6 +88,9 @@ class DataSource(object):
         self.result = Result()
         self.xlabel = self.ylabel = self.label = None
 
+    def append_bin(self, edge=None, content=0., error=0., xerror=0.):
+        self.result.append_bin(edge, content, error, xerror)
+
 def to_datasource(item):
     """Convert the argument into a datasource.
 

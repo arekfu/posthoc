@@ -192,6 +192,15 @@ class Result:
         logger.debug('rescale_x: new result is %s', new_result)
         return new_result
 
+    def append_bin(self, edge=None, content=0., error=0., xerror=0.):
+        new_bin_edge = edge if edge else 2.*self.edges[-1] - self.edges[-2]
+        self.edges = np.append(self.edges, new_bin_edge)
+        self.contents = np.append(self.contents, content)
+        if not self.errors is None:
+            self.errors = np.append(self.errors, error)
+        if not self.xerrors is None:
+            self.xerrors = np.append(self.xerrors, error)
+
 class XMLResult(object):
     """Extract data from the Tripoli-4® output file.
 
