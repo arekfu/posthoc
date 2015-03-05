@@ -36,7 +36,7 @@ class Result:
         if tolerance:
             tol = tolerance
         else:
-            tol = 10. * np.maximum(
+            tol = 100. * np.maximum(
                 np.finfo(self.edges.dtype).eps,
                 np.finfo(other.edges.dtype).eps
                 )
