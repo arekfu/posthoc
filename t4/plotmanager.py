@@ -24,18 +24,18 @@ class PlotManager(object):
 
         xlabel = ylabel = ''
         for item in to_plot:
-            ds = datasources.to_datasource(item)
             try:
+                ds = datasources.to_datasource(item)
                 plotter.draw(ds)
+                if not xlabel:
+                    xlabel = ds.xlabel
+                    logger.debug('Updating xlabel=%s', xlabel)
+                if not ylabel:
+                    ylabel = ds.ylabel
+                    logger.debug('Updating ylabel=%s', ylabel)
             except Exception as e:
                 logger.error('Cannot plot datasource: %s', e.args)
 
-            if not xlabel:
-                xlabel = ds.xlabel
-                logger.debug('Updating xlabel=%s', xlabel)
-            if not ylabel:
-                ylabel = ds.ylabel
-                logger.debug('Updating ylabel=%s', ylabel)
 
         logger.debug('Setting labels: x="%s", y="%s"', xlabel, ylabel)
         axes.set_xlabel(xlabel)
