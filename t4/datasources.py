@@ -202,13 +202,16 @@ class CSVDataSource(TXTDataSource):
                 raise ValueError('column_indices must contain 2, 3 or 4 indices')
 
         def __call__(self, line):
+            # strip leading and trailing whitespace
+            stripped = line.strip()
+
             # the following line assigns to comment_index the index of the
             # first comment character encountered in the splitted string
             comment_index = next(
-                    (i for (i, char) in enumerate(line) for comment_char in self.comment_chars if char==comment_char),
+                    (i for (i, char) in enumerate(stripped) for comment_char in self.comment_chars if char==comment_char),
                     None
                     )
-            non_comment = line[:comment_index]
+            non_comment = stripped[:comment_index]
 
             # split the string
             splitted = re.split('[' + self.delimiter_chars + ']+', non_comment)
