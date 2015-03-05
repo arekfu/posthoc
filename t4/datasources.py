@@ -24,11 +24,14 @@ class DataSource(object):
 
     def __add__(self, other):
         add = copy.deepcopy(self)
-        add.result += other.result
+        add += other
         return add
 
     def __iadd__(self, other):
-        self.result += other.result
+        if isinstance(other, DataSource):
+            self.result += other.result
+        else:
+            self.result += other
         return self
 
     def __sub__(self, other):
@@ -37,7 +40,10 @@ class DataSource(object):
         return sub
 
     def __isub__(self, other):
-        self.result -= other.result
+        if isinstance(other, DataSource):
+            self.result -= other.result
+        else:
+            self.result -= other
         return self
 
     def __mul__(self, other):
@@ -46,7 +52,10 @@ class DataSource(object):
         return mul
 
     def __imul__(self, other):
-        self.result *= other.result
+        if isinstance(other, DataSource):
+            self.result *= other.result
+        else:
+            self.result *= other
         return self
 
     def __div__(self, other):
@@ -55,7 +64,10 @@ class DataSource(object):
         return div
 
     def __idiv__(self, other):
-        self.result /= other.result
+        if isinstance(other, DataSource):
+            self.result /= other.result
+        else:
+            self.result /= other
         return self
 
     def copy(self):

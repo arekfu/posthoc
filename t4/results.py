@@ -54,44 +54,56 @@ class Result:
             raise Exception('ResultTuple have incompatible xerrors.')
 
     def __add__(self, other):
-        self._check_consistency_edges(other)
         edges = copy.deepcopy(self.edges)
         xerrors = copy.deepcopy(self.xerrors)
-        contents = self.contents + other.contents
-        if not self.errors is None and not other.errors is None:
-            errors = np.sqrt(self.errors**2 + other.errors**2)
-        elif not other.errors is None:
-            errors = copy.deepcopy(other.errors)
-        else:
+        if np.isscalar(other):
+            contents = self.contents + other
             errors = copy.deepcopy(self.errors)
+        else:
+            self._check_consistency_edges(other)
+            contents = self.contents + other.contents
+            if not self.errors is None and not other.errors is None:
+                errors = np.sqrt(self.errors**2 + other.errors**2)
+            elif not other.errors is None:
+                errors = copy.deepcopy(other.errors)
+            else:
+                errors = copy.deepcopy(self.errors)
         return Result(edges, contents, errors, xerrors)
 
     def __sub__(self, other):
-        self._check_consistency_edges(other)
         edges = copy.deepcopy(self.edges)
         xerrors = copy.deepcopy(self.xerrors)
-        contents = self.contents - other.contents
-        if not self.errors is None and not other.errors is None:
-            errors = np.sqrt(self.errors**2 + other.errors**2)
-        elif not other.errors is None:
-            errors = copy.deepcopy(other.errors)
-        else:
+        if np.isscalar(other):
+            contents = self.contents - other
             errors = copy.deepcopy(self.errors)
+        else:
+            self._check_consistency_edges(other)
+            contents = self.contents - other.contents
+            if not self.errors is None and not other.errors is None:
+                errors = np.sqrt(self.errors**2 + other.errors**2)
+            elif not other.errors is None:
+                errors = copy.deepcopy(other.errors)
+            else:
+                errors = copy.deepcopy(self.errors)
         return Result(edges, contents, errors, xerrors)
 
     def __mul__(self, other):
-        self._check_consistency_edges(other)
         edges = copy.deepcopy(self.edges)
         xerrors = copy.deepcopy(self.xerrors)
-        contents = self.contents * other.contents
-        if not self.errors is None and not other.errors is None:
-            errors = np.sqrt((self.contents*other.errors)**2 + (self.errors*other.contents)**2)
-        elif not other.errors is None:
-            errors = self.contents*other.errors
-        elif not self.errors is None:
-            errors = self.errors*other.contents
+        if np.isscalar(other):
+            contents = self.contents * other
+            errors = self.errors * other
         else:
-            errors = None
+            self._check_consistency_edges(other)
+            contents = self.contents * other.contents
+            if not self.errors is None and not other.errors is None:
+                errors = np.sqrt((self.contents*other.errors)**2 + (self.errors*other.contents)**2)
+            elif not other.errors is None:
+                errors = self.contents*other.errors
+            elif not self.errors is None:
+                errors = self.errors*other.contents
+            else:
+                errors = None
         return Result(edges, contents, errors, xerrors)
 
     def __div__(self, other):
@@ -99,24 +111,28 @@ class Result:
             # we ignore warnings from div-by-zero
             warnings.filterwarnings('ignore', 'invalid value', RuntimeWarning)
 
-            self._check_consistency_edges(other)
             edges = copy.deepcopy(self.edges)
             xerrors = copy.deepcopy(self.xerrors)
-            contents = self.contents/other.contents
-            if not self.errors is None and not other.errors is None:
-                errors = np.nan_to_num(
-                        contents * np.sqrt((self.errors/self.contents)**2 + (other.errors/other.contents)**2)
-                        )
-            elif not other.errors is None:
-                errors = np.nan_to_num(
-                        contents * other.errors / other.contents
-                        )
-            elif not self.errors is None:
-                errors = np.nan_to_num(
-                        self.errors / other.contents
-                        )
+            if np.isscalar(other):
+                contents = self.contents / other
+                errors = self.errors / other
             else:
-                errors = None
+                self._check_consistency_edges(other)
+                contents = self.contents/other.contents
+                if not self.errors is None and not other.errors is None:
+                    errors = np.nan_to_num(
+                            contents * np.sqrt((self.errors/self.contents)**2 + (other.errors/other.contents)**2)
+                            )
+                elif not other.errors is None:
+                    errors = np.nan_to_num(
+                            contents * other.errors / other.contents
+                            )
+                elif not self.errors is None:
+                    errors = np.nan_to_num(
+                            self.errors / other.contents
+                            )
+                else:
+                    errors = None
             return Result(edges, contents, errors, xerrors)
 
     def __getitem__(self, key):
