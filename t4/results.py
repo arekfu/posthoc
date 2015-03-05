@@ -41,7 +41,7 @@ class Result:
                 np.finfo(other.edges.dtype).eps
                 )
         if np.amax(diff)>tol:
-            raise Exception('ResultTuples have incompatible edges: ' + str(diff))
+            raise Exception('ResultTuples have incompatible edges:\ntolerance = ' + str(tol) + '\ndifferences = ' + str(diff))
 
         if self.xerrors is None or other.xerrors is None:
             return
