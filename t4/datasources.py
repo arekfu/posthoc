@@ -217,7 +217,7 @@ class CSVDataSource(TXTDataSource):
             splitted = re.split('[' + self.delimiter_chars + ']+', non_comment)
 
             # skip blank lines
-            if not splitted:
+            if not any(s for s in splitted):
                 return None
 
             try:
