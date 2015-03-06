@@ -201,6 +201,11 @@ class Result:
         if not self.xerrors is None:
             self.xerrors = np.append(self.xerrors, error)
 
+    def chop(self, threshold=1e-30):
+        chop_indices = self.contents<threshold
+        self.contents[chop_indices] = 0.
+        self.errors[chop_indices] = 0.
+
 class XMLResult(object):
     """Extract data from the Tripoli-4® output file.
 

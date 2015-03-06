@@ -91,6 +91,9 @@ class DataSource(object):
     def append_bin(self, edge=None, content=0., error=0., xerror=0.):
         self.result.append_bin(edge, content, error, xerror)
 
+    def chop(self, threshold=1e-30):
+        self.result.chop(threshold)
+
 def to_datasource(item):
     """Convert the argument into a datasource.
 
