@@ -79,10 +79,13 @@ class DataSource(object):
         return new
 
     def rebin(self, nbins, mean=True):
-        self.result = self.result.rebin(nbins, mean)
+        self.result.rebin(nbins, mean)
 
-    def rescale_x(self, factor, rescale_y=True):
-        self.result = self.result.rescale_x(factor, rescale_y)
+    def rescale_edges(self, factor, rescale_contents=True):
+        self.result.rescale_edges(factor, rescale_contents)
+
+    def rescale_errors(self, factor):
+        self.result.rescale_errors(factor)
 
     def null(self):
         self.result = Result()

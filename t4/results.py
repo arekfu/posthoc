@@ -146,52 +146,52 @@ class Result:
     def rebin(self, nbins, mean=True):
         n = len(self.edges)
         n1 = n-1
-        edges = self.edges[::nbins]
+        self.edges = self.edges[::nbins]
         if mean:
-            contents = self.contents[:-1].reshape(n1//nbins, nbins).mean(axis=1)
+            self.contents = self.contents[:-1].reshape(n1//nbins, nbins).mean(axis=1)
         else:
-            contents = self.contents[:-1].reshape(n1//nbins, nbins).sum(axis=1)
-        contents = np.append(contents, [dtype(0)])
+            self.contents = self.contents[:-1].reshape(n1//nbins, nbins).sum(axis=1)
+        self.contents = np.append(self.contents, [dtype(0)])
 
         if not self.xerrors is None:
             if mean:
-                xerrors = np.sqrt((self.xerrors[:-1].reshape(n1//nbins, nbins)**2).mean(axis=1))
+                self.xerrors = np.sqrt((self.xerrors[:-1].reshape(n1//nbins, nbins)**2).mean(axis=1))
             else:
-                xerrors = np.sqrt((self.xerrors[:-1].reshape(n1//nbins, nbins)**2).sum(axis=1))
-            xerrors = np.append(xerrors, [dtype(0)])
-        else:
-            xerrors = None
+                self.xerrors = np.sqrt((self.xerrors[:-1].reshape(n1//nbins, nbins)**2).sum(axis=1))
+            self.xerrors = np.append(self.xerrors, [dtype(0)])
 
         if not self.errors is None:
             if mean:
-                errors = np.sqrt((self.errors[:-1].reshape(n1//nbins, nbins)**2).mean(axis=1))
+                self.errors = np.sqrt((self.errors[:-1].reshape(n1//nbins, nbins)**2).mean(axis=1))
             else:
-                errors = np.sqrt((self.errors[:-1].reshape(n1//nbins, nbins)**2).sum(axis=1))
-            errors = np.append(errors, [dtype(0)])
-        else:
-            errors = None
+                self.errors = np.sqrt((self.errors[:-1].reshape(n1//nbins, nbins)**2).sum(axis=1))
+            self.errors = np.append(self.errors, [dtype(0)])
 
-        return Result(edges=edges, contents=contents, errors=errors, xerrors=xerrors)
+        logger.debug('rebin: new result is %s', self)
 
-    def rescale_x(self, factor, rescale_y=True):
+    def rescale_edges(self, factor, rescale_contents=True):
         """Apply a scale factor to the bin edges (and xerrors, if present).
 
         Arguments:
         factor -- the factor
 
         Keyword arguments:
-        rescale_y: if True, apply 1/factor to contents and errors.
+        rescale_contents: if True, apply 1/factor to contents and errors.
         """
 
-        edges = self.edges * factor
-        xerrors = self.xerrors * factor if not self.xerrors is None else None
-        if rescale_y:
-            contents = self.contents / factor
-            errors = self.errors / factor if not self.errors is None else None
+        self.edges *= factor
+        self.xerrors = self.xerrors * factor if not self.xerrors is None else None
+        if rescale_contents:
+            self.contents /= factor
+            self.errors = self.errors / factor if not self.errors is None else None
+        logger.debug('rescale_edges: new result is %s', self)
 
-        new_result = Result(edges=edges, contents=contents, errors=errors, xerrors=xerrors)
-        logger.debug('rescale_x: new result is %s', new_result)
-        return new_result
+    def rescale_errors(self, factor):
+        """Apply a scale factor to the bin errors."""
+
+        self.errors = self.errors * factor if not self.errors is None else None
+        logger.debug('rescale_errors: new result is %s', self)
+
 
     def append_bin(self, edge=None, content=0., error=0., xerror=0.):
         new_bin_edge = edge if edge else 2.*self.edges[-1] - self.edges[-2]
