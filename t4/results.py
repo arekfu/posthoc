@@ -29,10 +29,6 @@ class Result:
         return str(self)
 
     def _check_consistency_edges(self, other):
-        try:
-            diff = np.abs(self.edges - other.edges)
-        except ValueError:
-            raise Exception('ResultTuple edges have different sizes.')
         if tolerance:
             tol = tolerance
         else:
@@ -40,17 +36,22 @@ class Result:
                 np.finfo(self.edges.dtype).eps,
                 np.finfo(other.edges.dtype).eps
                 )
-        if np.amax(diff)>tol:
+
+        try:
+            diff = np.allclose(self.edges, other.edges, atol=tol)
+        except ValueError:
+            raise Exception('ResultTuple edges have different sizes.')
+        if not diff:
             raise Exception('ResultTuples have incompatible edges:\ntolerance = ' + str(tol) + '\ndifferences = ' + str(diff))
 
         if self.xerrors is None or other.xerrors is None:
             return
 
         try:
-            diff = np.abs(self.xerrors - other.xerrors)
+            diff = np.allclose(self.xerrors, other.xerrors, atol=tol)
         except ValueError:
             raise Exception('ResultTuple xerrors have different sizes.')
-        if np.amax(diff)>tol:
+        if not diff:
             raise Exception('ResultTuple have incompatible xerrors.')
 
     def __add__(self, other):
