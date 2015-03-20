@@ -288,7 +288,7 @@ class XMLResult(object):
         else:
             raise ValueError("argument batch_num to XMLResult.batch_results_xml must be 'last' or a batch number (int)")
 
-    def batch_result(self, score_name, batch_num, divide_by_bin=True):
+    def batch_result(self, score_name, batch_num, region_id=1, divide_by_bin=True):
         """Return the result for a given score in a given batch.
 
         Arguments:
@@ -296,6 +296,7 @@ class XMLResult(object):
         batch_num -- the number of the batch.
 
         Keyword arguments:
+        region_id -- the ID of the score region
         divide_by_bin -- whether the score result should be divided by the bin
         size.
 
@@ -310,7 +311,8 @@ class XMLResult(object):
         if not score:
             raise ValueError('argument score_name to XMLResult.batch_result must be the name of a score')
         score_grid_name = score['nrj_dec']
-        score_div_value_str = score.gelement_def['div_value']
+        gelement_def = score.find('gelement_def', id=region_id)
+        score_div_value_str = gelement_def['div_value']
         if score_div_value_str:
             score_div_value = dtype(score_div_value_str)
         else:
@@ -318,7 +320,7 @@ class XMLResult(object):
         grid = self.grid(score_grid_name)
         score_id = score['id']
         results = self.batch_results_xml(batch_num)
-        resultxml = results.find('result', scoreid=score_id).gelement
+        resultxml = results.find('result', scoreid=score_id).find('gelement', id=region_id)
         result = np.fromstring(resultxml.string, sep=' ', dtype=dtype)
         # divide by the bin width if requested
         if divide_by_bin:
@@ -339,7 +341,7 @@ class XMLResult(object):
             raise ValueError("argument batch_num to XMLResult.mean_results_xml must be 'last' or a batch number (int)")
         return results
 
-    def mean_result(self, score_name, batch_num='last', divide_by_bin=True):
+    def mean_result(self, score_name, batch_num='last', region_id=1, divide_by_bin=True):
         """Return the mean result for a given score.
 
         Arguments:
@@ -347,6 +349,7 @@ class XMLResult(object):
 
         Keyword arguments:
         batch_num -- results will be presented for the specified batch. Can be
+        region_id -- the ID of the score region
         an integer, in which case it is interpreted as a batch number, or
         'last'.
         divide_by_bin -- whether the score result should be divided by the bin
@@ -357,13 +360,15 @@ class XMLResult(object):
         (edges), the bin contents (contents) and the standard deviations on the
         bin contents (errors). The x errors member (xerrors) is set to None.
         """
+
         if not isinstance(score_name,str):
             raise ValueError('argument score_name to XMLResult.mean_result must be a string')
         score = self.score_xml(name=score_name)
         if not score:
             raise ValueError('argument score_name to XMLResult.mean_result must be the name of a score')
         score_grid_name = score['nrj_dec']
-        score_div_value_str = score.gelement_def['div_value']
+        gelement_def = score.find('gelement_def', id=region_id)
+        score_div_value_str = gelement_def['div_value']
         if score_div_value_str:
             score_div_value = dtype(score_div_value_str)
         else:
@@ -371,7 +376,7 @@ class XMLResult(object):
         grid = self.grid(score_grid_name)
         score_id = score['id']
         results = self.mean_results_xml(batch_num)
-        resultxml = results.find('mean_result', scoreid=score_id).gelement
+        resultxml = results.find('mean_result', scoreid=score_id).find('gelement', id=region_id)
         val_list = [ dtype(v.string) for v in resultxml.find_all('val') ]
         sd_list = [ dtype(v.string) for v in resultxml.find_all('sd') ]
         val = np.array(val_list, dtype=dtype)

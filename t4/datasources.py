@@ -114,7 +114,7 @@ xml_result_cache = dict()
 class XMLDataSource(DataSource):
     """Represents a T4 XML output file as a data source."""
 
-    def __init__(self, file_name, score_name, label=None, batch_num='last', divide_by_bin=True, **options):
+    def __init__(self, file_name, score_name, label=None, batch_num='last', region_id=1, divide_by_bin=True, **options):
         """Initialize the data source from an XML file.
 
         Arguments:
@@ -124,6 +124,7 @@ class XMLDataSource(DataSource):
         Keyword arguments:
         label -- a label for the data source
         batch_num -- the number of the batch.
+        region_id -- the ID of the score region
         divide_by_bin -- whether the score result should be divided by the bin
         size.
         options -- any additional options (used for plotting).
@@ -157,6 +158,7 @@ class XMLDataSource(DataSource):
             self.result = xml_result.mean_result(
                     score_name,
                     batch_num=batch_num,
+                    region_id=region_id,
                     divide_by_bin=divide_by_bin
                     )
 
