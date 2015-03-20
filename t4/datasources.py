@@ -109,6 +109,7 @@ def to_datasource(item):
     else:
         raise Exception('Not implemented yet')
 
+xml_result_cache = dict()
 
 class XMLDataSource(DataSource):
     """Represents a T4 XML output file as a data source."""
@@ -141,8 +142,13 @@ class XMLDataSource(DataSource):
 
         # Here we hope that file_name is a valid, well-formed T4 output file
         try:
-            logger.debug('Trying to open %s as an XMLResult', file_name)
-            xml_result = XMLResult(file_name)
+            if file_name in xml_result_cache:
+                logger.debug('Using cached XMLResult object for %s', file_name)
+                xml_result = xml_result_cache[file_name]
+            else:
+                logger.debug('Trying to open %s as an XMLResult', file_name)
+                xml_result = XMLResult(file_name)
+                xml_result_cache[file_name] = xml_result
         except IOError as e:
             logger.error('Fail: could not open %s as an XMLResult: %s', file_name, e.args)
             self.null()
