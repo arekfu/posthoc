@@ -213,6 +213,16 @@ class Result:
         self.contents[chop_indices] = 0.
         self.errors[chop_indices] = 0.
 
+    def divide_by_bin_size(self, drop='first'):
+        bin_sizes = self.edges[1:] - self.edges[:-1]
+        if drop == 'first':
+            bin_sizes = np.insert(bin_sizes, 0, 1.)
+        elif drop == 'last':
+            bin_sizes = np.insert(bin_sizes, len(bin_sizes), 1.)
+        else:
+            raise Exception("unrecognized 'drop' option value in divide_by_bin; must be 'first' or 'last'")
+        self.contents /= bin_sizes
+
 class XMLResult(object):
     """Extract data from the Tripoli-4® output file.
 
