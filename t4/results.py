@@ -349,11 +349,11 @@ class XMLResult(object):
 
         Keyword arguments:
         batch_num -- results will be presented for the specified batch. Can be
+                     an integer, in which case it is interpreted as a batch
+                     number, or 'last'.
         region_id -- the ID of the score region
-        an integer, in which case it is interpreted as a batch number, or
-        'last'.
         divide_by_bin -- whether the score result should be divided by the bin
-        size.
+                         size.
 
         Return value:
         a NamedTuple containing three numpy arrays: the lower bin edges
