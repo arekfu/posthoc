@@ -12,7 +12,7 @@ class PlotManager(object):
     def __init__(self):
         self.axes_plotter = dict()
 
-    def draw(self, to_plot, axes=None, xscale='linear', yscale='log', legend=True, **kwargs):
+    def draw(self, to_plot, axes=None, xscale='linear', yscale='log', legend=True, legendargs=None, **kwargs):
         if not axes:
             figure = plt.Figure()
             axes = plt.axes(xscale=xscale, yscale=yscale, **kwargs)
@@ -45,6 +45,9 @@ class PlotManager(object):
         axes.set_yscale(yscale)
         if legend:
             logger.debug('Adding legend')
-            axes.legend(plotter.handles, plotter.labels, labelspacing=0.05)
+            if legendargs:
+                axes.legend(plotter.handles, plotter.labels, labelspacing=0.05, **legendargs)
+            else:
+                axes.legend(plotter.handles, plotter.labels, labelspacing=0.05)
 
         return axes
