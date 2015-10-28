@@ -1,6 +1,6 @@
 import logging
 
-__all__ = ['results', 'plotter', 'plotmanager', 'datasources']
+__all__ = ['results', 'plotter', 'plotmanager', 'datasources', 'element_dictionary']
 __version__ = '0.1'
 
 logging.basicConfig(format='%(levelname)s (%(name)s): %(message)s')
