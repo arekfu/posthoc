@@ -1,7 +1,7 @@
 # coding: utf-8
 
-from results import XMLResult, TXTResult, Result
-import results
+from .results import XMLResult, TXTResult, Result
+from . import results
 from collections import Mapping
 import copy
 import numpy as np
@@ -10,7 +10,7 @@ import logging
 
 try:
     import ROOT
-    from results import ROOTResult
+    from .results import ROOTResult
     HAS_ROOT = True
 except ImportError:
     HAS_ROOT = False
@@ -137,7 +137,7 @@ class XMLDataSource(DataSource):
         options -- any additional options (used for plotting).
         """
 
-        if not isinstance(file_name, basestring) or not isinstance(score_name, basestring):
+        if not isinstance(file_name, str) or not isinstance(score_name, str):
             raise SourceError('File name and score name for XMLDataSource must be strings.')
 
         if options:
@@ -325,7 +325,7 @@ if HAS_ROOT:
             options -- any additional options (used for plotting).
             """
 
-            if not isinstance(file_name, basestring) or not isinstance(histo_name, basestring):
+            if not isinstance(file_name, str) or not isinstance(histo_name, str):
                 raise SourceError('File name and histogram name for ROOTDataSource must be strings.')
 
             if options:

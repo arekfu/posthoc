@@ -516,7 +516,7 @@ if HAS_ROOT:
             histo = self.tfile.Get(histo_name)
 
             nbins = histo.GetNbinsX()
-            for i in xrange(nbins):
+            for i in range(nbins):
                 x = histo.GetXaxis().GetBinLowEdge(i+1)
                 y = histo.GetBinContent(i+1)
                 ex = histo.GetXaxis().GetBinWidth(i+1)

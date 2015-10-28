@@ -1,8 +1,8 @@
 # coding: utf-8
 
 import matplotlib.pyplot as plt
-from plotter import Plotter
-import datasources
+from .plotter import Plotter
+from . import datasources
 import logging
 
 # set up logging
