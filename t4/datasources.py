@@ -8,6 +8,13 @@ import numpy as np
 import re
 import logging
 
+try:
+    import ROOT
+    from results import ROOTResult
+    HAS_ROOT = True
+except ImportError:
+    HAS_ROOT = False
+
 # set up logging
 logger = logging.getLogger(__name__)
 
@@ -298,3 +305,55 @@ class CSVDataSource(TXTDataSource):
 
         parser = self.CSVParser(column_spec, comment_chars, delimiter_chars)
         TXTDataSource.__init__(self, file_name, parser, xlabel, ylabel, label, **options)
+
+if HAS_ROOT:
+    root_result_cache = dict()
+
+    class ROOTDataSource(DataSource):
+        """Represents a ROOT output file as a data source."""
+
+        def __init__(self, file_name, histo_name, label=None, **options):
+            """Initialize the data source from an XML file.
+
+            Arguments:
+            file_name -- name of the .root file (string).
+            histo_name -- name of the histogram (string)
+
+            Keyword arguments:
+            label -- a label for the data source
+            size.
+            options -- any additional options (used for plotting).
+            """
+
+            if not isinstance(file_name, basestring) or not isinstance(histo_name, basestring):
+                raise SourceError('File name and histogram name for ROOTDataSource must be strings.')
+
+            if options:
+                if isinstance(options, Mapping):
+                    self.kwargs = options.copy()
+                else:
+                    raise SourceError('The options argument must be a dictionary-like object')
+            else:
+                self.kwargs = dict()
+
+            # Here we hope that file_name is a valid, well-formed ROOT file
+            try:
+                logger.debug('Trying to open %s as an ROOTResult', file_name)
+                if file_name in root_result_cache:
+                    logger.debug('Using cached ROOTResult object for %s', file_name)
+                    root_result = root_result_cache[file_name]
+                else:
+                    logger.debug('Trying to open %s as an ROOTResult', file_name)
+                    root_result = ROOTResult(file_name)
+                    root_result_cache[file_name] = root_result
+            except IOError as e:
+                logger.error('Fail: could not open %s as an ROOTResult: %s', file_name, e.args)
+                self.null()
+            else:
+                logger.debug('Success: opened %s as an ROOTResult', file_name)
+                self.result = root_result.result(histo_name)
+
+                self.xlabel, self.ylabel = root_result.labels(histo_name)
+
+                self.label = label if label else histo_name
+
