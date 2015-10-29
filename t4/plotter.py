@@ -48,11 +48,14 @@ class Plotter(object):
                     **errorbar_args
                     )
 
-            self.handles += [(step_artist, errorbar_artists)]
+            if data_source.label:
+                self.handles += [(step_artist, errorbar_artists)]
         else:
-            self.handles += [step_artist]
+            if data_source.label:
+                self.handles += [step_artist]
 
-        self.labels += [data_source.label]
+        if data_source.label:
+            self.labels += [data_source.label]
 
     def draw_line(self, data_source):
         result = data_source.result
@@ -74,8 +77,9 @@ class Plotter(object):
                 **args
                 )
 
-        self.handles += [artist]
-        self.labels += [data_source.label]
+        if data_source.label:
+            self.handles += [artist]
+            self.labels += [data_source.label]
 
     def strip_from_dict(self, d, keys):
         for key in keys:
