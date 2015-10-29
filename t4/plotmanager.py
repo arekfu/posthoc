@@ -50,4 +50,4 @@ class PlotManager(object):
             else:
                 axes.legend(plotter.handles, plotter.labels, labelspacing=0.05)
 
-        return axes
+        return plotter.handles
