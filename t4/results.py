@@ -4,6 +4,7 @@ import numpy as np
 import copy
 import warnings
 import logging
+import re
 
 try:
     import ROOT
@@ -13,6 +14,7 @@ except ImportError:
 
 # set up logging
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 tolerance = None
 dtype = float
@@ -458,7 +460,7 @@ class TXTResult(object):
                 if not parsed:
                     continue
 
-                if n_tokens==None:
+                if n_tokens is None:
                     n_tokens = len(parsed)
 
                 if len(parsed)!=n_tokens:
@@ -556,3 +558,125 @@ if HAS_ROOT:
             xlabel = histo.GetXaxis().GetTitle()
             ylabel = histo.GetXaxis().GetTitle()
             return xlabel, ylabel
+
+
+class MCTALResult(object):
+    SEARCH_TALLY = 0
+    SEARCH_F = 1
+    READ_F = 2
+    SEARCH_X = 3
+    READ_X = 4
+    SEARCH_ZONE = 5
+    SEARCH_VALS = 6
+    READ_VALS = 7
+
+    def __init__(self, file_name, tally_number, zone_number):
+        self.file_name = file_name
+        self.tally_number = tally_number
+        self.zone_number = zone_number
+
+    def result(self):
+        xs = []
+        ys = []
+        eys = []
+        exs = []
+        state = self.SEARCH_TALLY
+        with open(self.file_name) as f:
+            for line in f:
+                # strip leading and trailing whitespace
+                stripped = line.strip()
+
+                if state == self.SEARCH_TALLY:
+                    if re.match('tally +' + str(self.tally_number), stripped, re.I):
+                        logger.debug('Found tally %d', self.tally_number)
+                        state = self.SEARCH_F
+                elif state == self.SEARCH_F:
+                    match = re.match('f +([0-9]+)', stripped, re.I)
+                    if match:
+                        n_zones = int(match.group(1))
+                        if n_zones > 0:
+                            logger.debug('Found %d zones', n_zones)
+                            state = self.READ_F
+                            zones = []
+                elif state == self.READ_F:
+                    # split the string
+                    splitted = re.split(' +', stripped)
+                    ints = map(int, splitted)
+                    logger.debug('Parsed %d ints: %s', len(ints), str(ints))
+                    zones += ints
+                    if len(zones) >= n_zones:
+                        zone_index = zones.index(self.zone_number)
+                        state = self.SEARCH_X
+                elif state == self.SEARCH_X:
+                    match = re.match('([usmcet][tc]?) +([0-9]+)', stripped, re.I)
+                    if match:
+                        n_vals = int(match.group(2)) - 1
+                        if n_vals > 0:
+                            logger.debug('Found independent variable: %s, %d values', match.group(1), n_vals)
+                            state = self.READ_X
+                elif state == self.READ_X:
+                    # split the string
+                    splitted = re.split(' +', stripped)
+                    floats = map(float, splitted)
+                    logger.debug('Parsed %d floats: %s', len(floats), str(floats))
+                    xs += floats
+                    if len(xs) >= n_vals:
+                        state = self.SEARCH_VALS
+                        xs = xs[:n_vals]
+                elif state == self.SEARCH_VALS:
+                    if re.match('vals', stripped, re.I):
+                        logger.debug('Found values')
+                        must_skip = 2*zone_index*(n_vals+1)
+                        logger.debug('Will skip %d items', must_skip)
+                        state = self.SEARCH_ZONE
+                elif state == self.SEARCH_ZONE:
+                    # split the string
+                    splitted = re.split(' +', stripped)
+                    logger.debug('Read %d values, %d to go', len(splitted), must_skip)
+                    must_skip -= len(splitted)
+                    if must_skip <= 0:
+                        logger.debug('Moving to READ_VALS state')
+                        stripped = ' '.join(splitted[must_skip:])
+                        state = self.READ_VALS
+
+                if state == self.READ_VALS:
+                    # split the string
+                    splitted = re.split(' +', stripped)
+                    floats = map(float, splitted)
+                    logger.debug('Parsed %d floats: %s', len(floats), str(floats))
+                    ys += floats[::2]
+                    eys += floats[1::2]
+                    if len(ys) >= n_vals + 1:
+                        ys = ys[1:n_vals]
+                        eys = eys[1:n_vals]
+                        break
+            else:
+                raise Exception('Could not find tally ' + str(self.tally_number))
+
+        # fill exs here
+        exs = [b-a for a, b in zip(xs, xs[1:])]
+        exs.append(0)
+        ys.append(0)
+        eys.append(0)
+
+        if len(xs) != len(ys) or (eys and len(ys)!=len(eys)) or (exs and len(exs)!=len(xs)):
+            raise Exception('Inconsistent lengths of x ({})/y ({})/ey ({})/ex ({}) arrays'.format(len(xs), len(ys), len(eys), len(exs)))
+
+        logger.debug('Parsing succeeded')
+        logger.debug('xs=%s', xs)
+        logger.debug('ys=%s', ys)
+        logger.debug('exs=%s', exs)
+        logger.debug('eys=%s', eys)
+
+        xarr = np.array(xs)
+        yarr = np.array(ys)
+        eyarr = np.array(eys)
+        exarr = np.array(exs)
+        result = Result(
+                edges=xarr,
+                contents=yarr,
+                errors=eyarr,
+                xerrors=exarr
+                )
+        return result
+
