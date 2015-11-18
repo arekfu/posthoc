@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from .results import XMLResult, TXTResult, Result
+from .results import XMLResult, TXTResult, MCTALResult, Result
 from . import results
 from collections import Mapping
 import copy
@@ -116,7 +116,7 @@ def to_datasource(item):
     else:
         raise Exception('Not implemented yet')
 
-xml_result_cache = dict()
+xml_result_cache = {}
 
 class XMLDataSource(DataSource):
     """Represents a T4 XML output file as a data source."""
@@ -307,7 +307,7 @@ class CSVDataSource(TXTDataSource):
         TXTDataSource.__init__(self, file_name, parser, xlabel, ylabel, label, **options)
 
 if HAS_ROOT:
-    root_result_cache = dict()
+    root_result_cache = {}
 
     class ROOTDataSource(DataSource):
         """Represents a ROOT output file as a data source."""
@@ -338,22 +338,75 @@ if HAS_ROOT:
 
             # Here we hope that file_name is a valid, well-formed ROOT file
             try:
-                logger.debug('Trying to open %s as an ROOTResult', file_name)
+                logger.debug('Trying to open %s as a ROOTResult', file_name)
                 if file_name in root_result_cache:
                     logger.debug('Using cached ROOTResult object for %s', file_name)
                     root_result = root_result_cache[file_name]
                 else:
-                    logger.debug('Trying to open %s as an ROOTResult', file_name)
+                    logger.debug('Trying to open %s as a ROOTResult', file_name)
                     root_result = ROOTResult(file_name)
                     root_result_cache[file_name] = root_result
             except IOError as e:
-                logger.error('Fail: could not open %s as an ROOTResult: %s', file_name, e.args)
+                logger.error('Fail: could not open %s as a ROOTResult: %s', file_name, e.args)
                 self.null()
             else:
-                logger.debug('Success: opened %s as an ROOTResult', file_name)
+                logger.debug('Success: opened %s as a ROOTResult', file_name)
                 self.result = root_result.result(histo_name)
 
                 self.xlabel, self.ylabel = root_result.labels(histo_name)
 
                 self.label = label if label else histo_name
+
+mctal_result_cache = {}
+
+class MCTALDataSource(DataSource):
+    """Represents an MCNP6 MCTAL output file as a data source."""
+
+    def __init__(self, file_name, tally_number, zone_number, label=None, **options):
+        """Initialize the data source from an MCTAL file.
+
+        Arguments:
+        file_name -- name of the .root file (string).
+        tally_number -- number of the tally
+        zone_number -- number of the zone
+
+        Keyword arguments:
+        label -- a label for the data source
+        size.
+        options -- any additional options (used for plotting).
+        """
+
+        if not isinstance(file_name, str):
+            raise SourceError('File name for MCTALDataSource must be a string.')
+
+        if not isinstance(tally_number, int) or not isinstance(zone_number, int):
+            raise SourceError('Tally and zone numbers for MCTALDataSource must be ints.')
+
+        if options:
+            if isinstance(options, Mapping):
+                self.kwargs = options.copy()
+            else:
+                raise SourceError('The options argument must be a dictionary-like object')
+        else:
+            self.kwargs = dict()
+
+        # Here we hope that file_name is a valid, well-formed MCTAL file
+        try:
+            if file_name in mctal_result_cache:
+                logger.debug('Using cached MCTALResult object for %s', file_name)
+                mctal_result = mctal_result_cache[file_name]
+            else:
+                logger.debug('Trying to open %s as a MCTALResult', file_name)
+                mctal_result = MCTALResult(file_name)
+                mctal_result_cache[file_name] = mctal_result
+        except IOError as e:
+            logger.error('Fail: could not open %s as a MCTALResult: %s', file_name, e.args)
+            self.null()
+        else:
+            logger.debug('Success: opened %s as a MCTALResult', file_name)
+            self.result = mctal_result.result(tally_number, zone_number)
+
+            self.xlabel, self.ylabel = mctal_result.labels(tally_number)
+
+            self.label = label if label else mctal_result.label(tally_number)
 
