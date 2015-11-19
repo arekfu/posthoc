@@ -362,7 +362,7 @@ mctal_result_cache = {}
 class MCTALDataSource(DataSource):
     """Represents an MCNP6 MCTAL output file as a data source."""
 
-    def __init__(self, file_name, tally_number, zone_number, label=None, **options):
+    def __init__(self, file_name, tally_number, zone_number, label=None, divide_by_bin=True, **options):
         """Initialize the data source from an MCTAL file.
 
         Arguments:
@@ -372,6 +372,8 @@ class MCTALDataSource(DataSource):
 
         Keyword arguments:
         label -- a label for the data source
+        size.
+        divide_by_bin -- whether the score result should be divided by the bin
         size.
         options -- any additional options (used for plotting).
         """
@@ -405,6 +407,8 @@ class MCTALDataSource(DataSource):
         else:
             logger.debug('Success: opened %s as a MCTALResult', file_name)
             self.result = mctal_result.result(tally_number, zone_number)
+            if divide_by_bin:
+                self.result.divide_by_bin_size()
 
             self.xlabel, self.ylabel = mctal_result.labels(tally_number)
 
