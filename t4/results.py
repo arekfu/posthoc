@@ -650,24 +650,27 @@ class MCTALResult(object):
                 elif state == self.SEARCH_ZONE:
                     # split the string
                     splitted = re.split(' +', line.strip())
-                    logger.debug('Read %d values, %d to go', len(splitted), must_skip)
                     must_skip -= len(splitted)
-                    if must_skip <= 0:
+                    logger.debug('Read %d values, %d to go: starts with %s', len(splitted), must_skip, splitted[0])
+                    if must_skip < 0:
                         logger.debug('Moving to READ_VALS state')
                         line = ' '.join(splitted[must_skip:])
+                        logger.debug('Handing over %s to parser', line)
                         state = self.READ_VALS
 
                 if state == self.READ_VALS:
-                    # split the string
-                    splitted = re.split(' +', line.strip())
-                    floats = map(float, splitted)
-                    logger.debug('Parsed %d floats: %s', len(floats), str(floats))
-                    ys += floats[::2]
-                    eys += floats[1::2]
-                    if len(ys) >= n_vals + 1:
-                        ys = ys[1:n_vals]
-                        eys = eys[1:n_vals]
-                        break
+                    stripped = line.strip()
+                    if stripped:
+                        # split the string
+                        splitted = re.split(' +', stripped)
+                        floats = map(float, splitted)
+                        logger.debug('Parsed %d floats: %s', len(floats), str(floats))
+                        ys += floats[::2]
+                        eys += floats[1::2]
+                        if len(ys) >= n_vals + 1:
+                            ys = ys[1:n_vals]
+                            eys = eys[1:n_vals]
+                            break
 
                 line = f.readline()
 
