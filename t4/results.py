@@ -587,6 +587,13 @@ class MCTALResult(object):
                 line = f.readline()
 
     def result(self, tally_number, zone_number):
+        res = self.result_dict.get((tally_number, zone_number), None)
+        if res is None:
+            res = self.extract_result(tally_number, zone_number)
+            self.result_dict[(tally_number, zone_number)] = res
+        return res
+
+    def extract_result(self, tally_number, zone_number):
         xs = []
         ys = []
         eys = []
