@@ -224,7 +224,7 @@ class Result:
             raise Exception("unrecognized 'pad' option value in divide_by_bin; must be 'first' or 'last'")
         self.contents /= bin_sizes
 
-class XMLResult(object):
+class T4XMLResult(object):
     """Extract data from the Tripoli-4® output file.
 
     This class is responsible for extracting the calculation results, grids,
@@ -303,7 +303,7 @@ class XMLResult(object):
             results = self.soup.batches.find('batch', recursive=False, num=batch_num)
             return results
         else:
-            raise ValueError("argument batch_num to XMLResult.batch_results_xml must be 'last' or a batch number (int)")
+            raise ValueError("argument batch_num to T4XMLResult.batch_results_xml must be 'last' or a batch number (int)")
 
     def batch_result(self, score_name, batch_num, region_id=1, divide_by_bin=True):
         """Return the result for a given score in a given batch.
@@ -323,10 +323,10 @@ class XMLResult(object):
         (xerrors) tuple elements are set to None.
         """
         if not isinstance(score_name,str):
-            raise ValueError('argument score_name to XMLResult.batch_result must be a string')
+            raise ValueError('argument score_name to T4XMLResult.batch_result must be a string')
         score = self.score_xml(name=score_name)
         if not score:
-            raise ValueError('argument score_name to XMLResult.batch_result must be the name of a score')
+            raise ValueError('argument score_name to T4XMLResult.batch_result must be the name of a score')
         score_grid_name = score['nrj_dec']
         gelement_def = score.find('gelement_def', id=region_id)
         score_div_value_str = gelement_def['div_value']
@@ -355,7 +355,7 @@ class XMLResult(object):
         elif isinstance(batch_num, int):
             results = self.soup.batches.find('mean_results', recursive=False, batchnum=batch_num)
         else:
-            raise ValueError("argument batch_num to XMLResult.mean_results_xml must be 'last' or a batch number (int)")
+            raise ValueError("argument batch_num to T4XMLResult.mean_results_xml must be 'last' or a batch number (int)")
         return results
 
     def mean_result(self, score_name, batch_num='last', region_id=1, divide_by_bin=True):
@@ -379,10 +379,10 @@ class XMLResult(object):
         """
 
         if not isinstance(score_name,str):
-            raise ValueError('argument score_name to XMLResult.mean_result must be a string')
+            raise ValueError('argument score_name to T4XMLResult.mean_result must be a string')
         score = self.score_xml(name=score_name)
         if not score:
-            raise ValueError('argument score_name to XMLResult.mean_result must be the name of a score')
+            raise ValueError('argument score_name to T4XMLResult.mean_result must be the name of a score')
         score_grid_name = score['nrj_dec']
         gelement_def = score.find('gelement_def', id=region_id)
         score_div_value_str = gelement_def['div_value']

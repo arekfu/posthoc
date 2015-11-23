@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from .results import XMLResult, TXTResult, MCTALResult, Result
+from .results import T4XMLResult, TXTResult, MCTALResult, Result
 from . import results
 from collections import Mapping
 import copy
@@ -116,9 +116,9 @@ def to_datasource(item):
     else:
         raise Exception('Not implemented yet')
 
-xml_result_cache = {}
+t4xml_result_cache = {}
 
-class XMLDataSource(DataSource):
+class T4XMLDataSource(DataSource):
     """Represents a T4 XML output file as a data source."""
 
     def __init__(self, file_name, score_name, label=None, batch_num='last', region_id=1, divide_by_bin=True, **options):
@@ -138,7 +138,7 @@ class XMLDataSource(DataSource):
         """
 
         if not isinstance(file_name, str) or not isinstance(score_name, str):
-            raise SourceError('File name and score name for XMLDataSource must be strings.')
+            raise SourceError('File name and score name for T4XMLDataSource must be strings.')
 
         if options:
             if isinstance(options, Mapping):
@@ -150,26 +150,26 @@ class XMLDataSource(DataSource):
 
         # Here we hope that file_name is a valid, well-formed T4 output file
         try:
-            if file_name in xml_result_cache:
-                logger.debug('Using cached XMLResult object for %s', file_name)
-                xml_result = xml_result_cache[file_name]
+            if file_name in t4xml_result_cache:
+                logger.debug('Using cached T4XMLResult object for %s', file_name)
+                t4xml_result = t4xml_result_cache[file_name]
             else:
-                logger.debug('Trying to open %s as an XMLResult', file_name)
-                xml_result = XMLResult(file_name)
-                xml_result_cache[file_name] = xml_result
+                logger.debug('Trying to open %s as a T4XMLResult', file_name)
+                t4xml_result = T4XMLResult(file_name)
+                t4xml_result_cache[file_name] = t4xml_result
         except IOError as e:
-            logger.error('Fail: could not open %s as an XMLResult: %s', file_name, e.args)
+            logger.error('Fail: could not open %s as a T4XMLResult: %s', file_name, e.args)
             self.null()
         else:
-            logger.debug('Success: opened %s as an XMLResult', file_name)
-            self.result = xml_result.mean_result(
+            logger.debug('Success: opened %s as a T4XMLResult', file_name)
+            self.result = t4xml_result.mean_result(
                     score_name,
                     batch_num=batch_num,
                     region_id=region_id,
                     divide_by_bin=divide_by_bin
                     )
 
-            self.xlabel, self.ylabel = xml_result.labels(score_name)
+            self.xlabel, self.ylabel = t4xml_result.labels(score_name)
 
             self.label = label if label else score_name
 
@@ -313,7 +313,7 @@ if HAS_ROOT:
         """Represents a ROOT output file as a data source."""
 
         def __init__(self, file_name, histo_name, label=None, **options):
-            """Initialize the data source from an XML file.
+            """Initialize the data source from a ROOT histogram.
 
             Arguments:
             file_name -- name of the .root file (string).

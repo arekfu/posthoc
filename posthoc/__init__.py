@@ -1,7 +1,7 @@
 import logging
 
 __all__ = ['results', 'plotter', 'plotmanager', 'datasources', 'element_dictionary']
-__version__ = '0.1'
+__version__ = '0.2'
 
 logging.basicConfig(format='%(levelname)s (%(name)s): %(message)s')
 
