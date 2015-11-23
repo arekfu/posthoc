@@ -114,10 +114,14 @@ ELEMENT_DICTIONARY = {
     112: "Cn"
 }
 
-ELEMENT_TO_Z_DICTIONARY = dict((v,k) for k,v in list(ELEMENT_DICTIONARY.items()))
+ELEMENT_TO_Z_DICTIONARY = dict((v, k)
+                               for k, v in list(ELEMENT_DICTIONARY.items())
+                               )
+
 
 def element_name(z):
     return ELEMENT_DICTIONARY.get(z, 'unknown')
+
 
 def element_z(name):
     return ELEMENT_TO_Z_DICTIONARY.get(name, 0)
