@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-from t4.plotmanager import PlotManager
-from t4.datasources import XMLDataSource, CSVDataSource
+from posthoc.plotmanager import PlotManager
+from posthoc.datasources import XMLDataSource, CSVDataSource
 import matplotlib.pyplot as plt
 import sys
 
