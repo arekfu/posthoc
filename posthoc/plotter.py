@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 class Plotter(object):
     def __init__(self, axes=None):
         self.axes = axes
-        self.handles = list()
-        self.labels = list()
+        self.handles = []
+        self.labels = []
 
     def draw(self, data_source):
         step = data_source.kwargs.get('steps', False)
