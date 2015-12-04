@@ -42,7 +42,7 @@ class Result:
         try:
             diff = np.allclose(self.edges, other.edges, atol=tol)
         except ValueError:
-            raise Exception('ResultTuple edges have different sizes.')
+            raise Exception('ResultTuple edges have different sizes: {}!={}'.format(len(self.edges), len(other.edges)))
         if not diff:
             raise Exception('ResultTuples have incompatible edges:\n'
                             'TOLERANCE = ' + str(tol) + '\n'
