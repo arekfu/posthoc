@@ -228,3 +228,4 @@ class Result:
             raise Exception("unrecognized 'pad' option value in "
                             "divide_by_bin; must be 'first' or 'last'")
         self.contents /= bin_sizes
+        self.errors /= bin_sizes
