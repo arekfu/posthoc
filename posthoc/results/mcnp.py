@@ -152,6 +152,10 @@ class MCTALResult(object):
         yarr = np.array(ys, dtype=DTYPE)
         eyarr = np.array(eys, dtype=DTYPE)
         exarr = np.ediff1d(xs)
+
+        # MCNP yields relative errors: normalize
+        eyarr *= yarr
+
         result = Result(edges=xarr, contents=yarr, errors=eyarr, xerrors=exarr)
         return result
 
