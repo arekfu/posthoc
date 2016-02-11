@@ -1,9 +1,10 @@
 # coding: utf-8
 
 import matplotlib.pyplot as plt
-from .plotter import Plotter
-import datasources.datasource
 import logging
+
+from .plotter import Plotter
+from .datasources.datasource import to_datasource
 
 # set up logging
 LOGGER = logging.getLogger(__name__)
@@ -27,7 +28,7 @@ class PlotManager(object):
         xlabel = ylabel = ''
         for item in to_plot:
             try:
-                ds = datasources.datasource.to_datasource(item)
+                ds = to_datasource(item)
                 plotter.draw(ds)
                 if not xlabel:
                     xlabel = ds.xlabel
