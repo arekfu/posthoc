@@ -150,6 +150,31 @@ class T4XMLResult(object):
         result = np.append(result, [DTYPE(0)])
         return Result(edges=grid, contents=result, errors=None, xerrors=None)
 
+    def batch_result_keff(self, estimator_name, batch_num):
+        """Return the keff result for a given estimator in a given batch.
+
+        Arguments:
+        estimator_name -- name of the estimator (one of 'KSTEP', 'KTRACK',
+        'KCOLL')
+        batch_num -- the number of the batch.
+
+        Return value:
+        the keff value
+        """
+        if not isinstance(estimator_name, str):
+            raise ValueError('argument score_name to '
+                             'T4XMLResult.batch_result_keff '
+                             'must be a string')
+        ename = estimator_name.upper()
+        if ename != 'KCOLL' and ename != 'KTRACK' and ename != 'KSTEP':
+            raise ValueError('argument uct_estimator_name to '
+                             'T4XMLResult.batch_result_keff '
+                             'must be one of "KCOLL", "KTRACK" or "KSTEP"')
+        results = self.batch_results_xml(batch_num)
+        keffxml = results.find(estimator_name)
+        keff = DTYPE(keffxml.string)
+        return keff
+
     def mean_results_xml(self, batch_num='last'):
         if batch_num == 'last':
             results = self.soup.batches.find_all('mean_results',
