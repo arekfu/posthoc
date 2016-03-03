@@ -155,7 +155,7 @@ class T4XMLResult(object):
 
         Arguments:
         estimator_name -- name of the estimator (one of 'KSTEP', 'KTRACK',
-        'KCOLL')
+        'KCOLL' or 'MAT_KCOLL')
         batch_num -- the number of the batch.
 
         Return value:
@@ -166,10 +166,11 @@ class T4XMLResult(object):
                              'T4XMLResult.batch_result_keff '
                              'must be a string')
         ename = estimator_name.upper()
-        if ename != 'KCOLL' and ename != 'KTRACK' and ename != 'KSTEP':
+        if ename not in ['KCOLL', 'KTRACK', 'KSTEP', 'MAT_KCOLL']:
             raise ValueError('argument uct_estimator_name to '
                              'T4XMLResult.batch_result_keff '
-                             'must be one of "KCOLL", "KTRACK" or "KSTEP"')
+                             'must be one of "KCOLL", "KTRACK", "KSTEP" or '
+                             '"MAT_KCOLL"')
         results = self.batch_results_xml(batch_num)
         keffxml = results.find(estimator_name)
         keff = DTYPE(keffxml.string)
