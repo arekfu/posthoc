@@ -103,7 +103,7 @@ class T4XMLResult(object):
                              "a batch number (int)")
 
     def batch_result(self, score_name, batch_num, region_id=1,
-                     divide_by_bin=True):
+                     cell=(0,0,0,0), divide_by_bin=True):
         """Return the result for a given score in a given batch.
 
         Arguments:
@@ -113,7 +113,9 @@ class T4XMLResult(object):
         Keyword arguments:
         region_id -- the ID of the score region
         divide_by_bin -- whether the score result should be divided by the bin
-        size.
+                         size.
+        cell -- for extended meshes, a 4-tuple giving the time, x, y and z
+                indices of the requested energy distribution.
 
         Return value:
         a NamedTuple containing two numpy arrays: the lower bin edges (edges)
@@ -129,17 +131,28 @@ class T4XMLResult(object):
                              'must be the name of a score')
         score_grid_name = score['nrj_dec']
         gelement_def = score.find('gelement_def', id=region_id)
-        score_div_value_str = gelement_def['div_value']
-        if score_div_value_str:
-            score_div_value = DTYPE(score_div_value_str)
+        if gelement_def['zone_type']=='SPECIAL_MESH':
+            score_div_value = DTYPE(1)
+            nt = 1  # FIXME: assume one time bin for the moment being
+            nx = int(gelement_def['nx'])
+            ny = int(gelement_def['ny'])
+            nz = int(gelement_def['nz'])
         else:
-            score_div_value = None
+            score_div_value_str = gelement_def['div_value']
+            if score_div_value_str:
+                score_div_value = DTYPE(score_div_value_str)
+            else:
+                score_div_value = None
         grid = self.grid(score_grid_name)
         score_id = score['id']
         results = self.batch_results_xml(batch_num)
         resultxml = (results.find('result', scoreid=score_id)
                      .find('gelement', id=region_id))
         result = np.fromstring(resultxml.string, sep=' ', dtype=DTYPE)
+        if gelement_def['zone_type']=='SPECIAL_MESH':
+            ne = grid.size - 1
+            it, i, j, k = cell
+            result = result.reshape(nt, ne, nx, ny, nz)[it,:,i,j,k]
         # divide by the bin width if requested
         if divide_by_bin:
             width = np.ediff1d(grid)
@@ -190,7 +203,7 @@ class T4XMLResult(object):
         return results
 
     def mean_result(self, score_name, batch_num='last', region_id=1,
-                    divide_by_bin=True):
+                    cell=(0,0,0,0), divide_by_bin=True):
         """Return the mean result for a given score.
 
         Arguments:
@@ -201,6 +214,8 @@ class T4XMLResult(object):
                      an integer, in which case it is interpreted as a batch
                      number, or 'last'.
         region_id -- the ID of the score region
+        cell -- for extended meshes, a 4-tuple giving the time, x, y and z
+                indices of the requested energy distribution.
         divide_by_bin -- whether the score result should be divided by the bin
                          size.
 
@@ -219,11 +234,18 @@ class T4XMLResult(object):
                              'must be the name of a score')
         score_grid_name = score['nrj_dec']
         gelement_def = score.find('gelement_def', id=region_id)
-        score_div_value_str = gelement_def['div_value']
-        if score_div_value_str:
-            score_div_value = DTYPE(score_div_value_str)
+        if gelement_def['zone_type']=='SPECIAL_MESH':
+            score_div_value = DTYPE(1)
+            nt = 1  # FIXME: assume one time bin for the moment being
+            nx = int(gelement_def['nx'])
+            ny = int(gelement_def['ny'])
+            nz = int(gelement_def['nz'])
         else:
-            score_div_value = None
+            score_div_value_str = gelement_def['div_value']
+            if score_div_value_str:
+                score_div_value = DTYPE(score_div_value_str)
+            else:
+                score_div_value = None
         grid = self.grid(score_grid_name)
         score_id = score['id']
         results = self.mean_results_xml(batch_num)
@@ -233,6 +255,11 @@ class T4XMLResult(object):
         sd_list = [DTYPE(v.string) for v in resultxml.find_all('sd')]
         val = np.array(val_list, dtype=DTYPE)
         sd = np.array(sd_list, dtype=DTYPE)
+        if gelement_def['zone_type']=='SPECIAL_MESH':
+            ne = grid.size - 1
+            it, i, j, k = cell
+            val = val.reshape(nt, ne, nx, ny, nz)[it,:,i,j,k]
+            sd = sd.reshape(nt, ne, nx, ny, nz)[it,:,i,j,k]
         # divide by the bin width if requested
         self.divide_by_bin = divide_by_bin
         if self.divide_by_bin:
@@ -255,10 +282,8 @@ class T4XMLResult(object):
         response = self.response_xml(id=response_id)
         particle = response['particle'].lower()
         response_type = response['type'].lower()
-        score_div_value_str = score.gelement_def['div_value']
         unit = 'source'
-        if score_div_value_str:
-            unit += ' cm$^2$'
+        unit += ' cm$^2$'
         if self.divide_by_bin:
             unit += ' MeV'
         if ' ' in unit:
