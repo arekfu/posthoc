@@ -68,10 +68,12 @@ class CSVDataSource(TXTDataSource):
 
     class CSVParser(object):
         def __init__(self, column_spec, comment_chars, delimiter_chars,
-                     dtype=result.DTYPE):
+                     skip, max_lines, dtype=result.DTYPE):
             self.column_spec = column_spec
             self.comment_chars = comment_chars
             self.delimiter_chars = delimiter_chars
+            self.skip = skip
+            self.max_lines = -1 if max_lines is None else max_lines
             self.dtype = dtype
 
             # extract column indices and verify their number
@@ -82,6 +84,17 @@ class CSVDataSource(TXTDataSource):
                                  'indices')
 
         def __call__(self, line):
+            # skip the given number of lines
+            if self.skip:
+                self.skip -= 1
+                return None
+
+            # parse at most the given number of lines
+            if self.max_lines:
+                self.max_lines -= 1
+            else:
+                return None
+
             # strip leading and trailing whitespace
             stripped = line.strip()
 
@@ -129,6 +142,8 @@ class CSVDataSource(TXTDataSource):
             column_spec='0:1',
             comment_chars='#@',
             delimiter_chars=' \t',
+            skip=None,
+            max_lines=-1,
             xlabel=None,
             ylabel=None,
             label=None,
@@ -149,6 +164,6 @@ class CSVDataSource(TXTDataSource):
         options -- any additional options (used for plotting)
         """
 
-        parser = self.CSVParser(column_spec, comment_chars, delimiter_chars)
+        parser = self.CSVParser(column_spec, comment_chars, delimiter_chars, skip, max_lines)
         TXTDataSource.__init__(self, file_name, parser, xlabel, ylabel, label,
                                **options)
