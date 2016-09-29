@@ -249,3 +249,11 @@ class Result:
         else:
             return np.sum(self.contents[:-1])
 
+    def save_ascii(self, file_name):
+        to_save = []
+        for array in [self.edges, self.xerrors, self.contents, self.errors]:
+            if array is not None:
+                to_save.append(array)
+        to_save = np.asarray(to_save).transpose()
+        np.savetxt(file_name, to_save)
+
