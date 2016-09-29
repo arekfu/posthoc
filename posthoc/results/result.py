@@ -257,3 +257,9 @@ class Result:
         to_save = np.asarray(to_save).transpose()
         np.savetxt(file_name, to_save)
 
+    def bin_centers(self):
+        centers = 0.5*(self.edges[:-1] + self.edges[1:])
+        last_bin_center = 2.*centers[-1] - centers[-2]
+        new_edges = copy.deepcopy(self.edges)
+        centers = np.append(centers, last_bin_center)
+        return Result(new_edges, centers, None, None)

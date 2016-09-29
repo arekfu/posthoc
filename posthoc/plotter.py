@@ -20,7 +20,7 @@ class Plotter(object):
         result = data_source.result
         step_args = data_source.kwargs.copy()
         self.strip_from_dict(step_args, ['steps', 'errorbars', 'drawstyle',
-                                         'marker'])
+                                         'marker', 'cell'])
         step_artist, = self.axes.plot(result.edges,
                                       result.contents,
                                       drawstyle='steps-post',
@@ -40,7 +40,7 @@ class Plotter(object):
             except TypeError:
                 yerr = None
             self.strip_from_dict(errorbar_args, ['steps', 'errorbars',
-                                                 'linestyle'])
+                                                 'linestyle', 'cell'])
             errorbar_artists = self.axes.errorbar(centers,
                                                   result.contents[:-1],
                                                   yerr=yerr,
@@ -62,7 +62,7 @@ class Plotter(object):
         result = data_source.result
         args = data_source.kwargs.copy()
         centers = 0.5*(result.edges[1:]+result.edges[:-1])
-        self.strip_from_dict(args, ['steps', 'errorbars'])
+        self.strip_from_dict(args, ['steps', 'errorbars', 'cell'])
         if data_source.kwargs.get('errorbars', True):
             try:
                 yerr = result.errors[:-1]
