@@ -71,7 +71,7 @@ class MCTALResult(object):
                 elif state == self.READ_F:
                     # split the string
                     splitted = re.split(' +', line.strip())
-                    ints = map(int, splitted)
+                    ints = list(map(int, splitted))
                     logger.debug('Parsed %d ints: %s', len(ints), str(ints))
                     zones += ints
                     if len(zones) >= n_zones:
@@ -88,7 +88,7 @@ class MCTALResult(object):
                 elif state == self.READ_X:
                     # split the string
                     splitted = re.split(' +', line.strip())
-                    floats = map(float, splitted)
+                    floats = list(map(float, splitted))
                     logger.debug('Parsed %d floats: %s', len(floats),
                                  str(floats))
                     xs += floats
@@ -118,7 +118,7 @@ class MCTALResult(object):
                     if stripped:
                         # split the string
                         splitted = re.split(' +', stripped)
-                        floats = map(float, splitted)
+                        floats = list(map(float, splitted))
                         logger.debug('Parsed %d floats: %s', len(floats),
                                      str(floats))
                         ys += floats[::2]

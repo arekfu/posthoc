@@ -57,12 +57,12 @@ class DataSource(object):
             self.result *= other
         return self
 
-    def __div__(self, other):
+    def __truediv__(self, other):
         div = copy.deepcopy(self)
         div /= other
         return div
 
-    def __idiv__(self, other):
+    def __itruediv__(self, other):
         if isinstance(other, DataSource):
             self.result /= other.result
         else:

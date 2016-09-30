@@ -112,7 +112,7 @@ class Result:
                 errors = None
         return Result(edges, contents, errors, xerrors)
 
-    def __div__(self, other):
+    def __truediv__(self, other):
         with warnings.catch_warnings():
             # we ignore warnings from div-by-zero
             warnings.filterwarnings('ignore', 'invalid value', RuntimeWarning)
