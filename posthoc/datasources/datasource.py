@@ -96,6 +96,8 @@ class DataSource(object):
     def chop(self, threshold=1e-30):
         self.result.chop(threshold)
 
+    def is_valid(self):
+        return self.result.contents is not None
 
 def to_datasource(item):
     """Convert the argument into a datasource.
