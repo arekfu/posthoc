@@ -1,5 +1,6 @@
 # coding: utf-8
 
+from __future__ import division
 import logging
 
 import numpy as np
@@ -12,29 +13,44 @@ logger = logging.getLogger(__name__)
 
 
 class ROOTResult(object):
-    def __init__(self, file_name):
-        self.file_name = file_name
-        self.tfile = ROOT.TFile(self.file_name)
+    def __init__(self, file_name, histo_name):
+        self.tfile = ROOT.TFile(file_name)
+        self.histo = self.tfile.Get(histo_name)
 
-    def result(self, histo_name):
+    def __init__(self, file_name, tree_name, var, cut, bins):
+        self.tfile = ROOT.TFile(file_name)
+        tree = self.tfile.Get(tree_name)
+        if bins:
+            nx, xmin, xmax, log = bins
+            if log:
+                logxmin = np.log10(xmin)
+                logxmax = np.log10(xmax)
+                logbins = np.logspace(logxmin, logxmax, nx+1, base=10)
+                self.histo = ROOT.TH1F('htemp', 'htemp', nx, logbins)
+            else:
+                self.histo = ROOT.TH1F('htemp', 'htemp', nx, xmin, xmax)
+            tree.Project('htemp', var, cut)
+        else:
+            tree.Draw(var + '>>htemp', cut, 'goff')
+        self.histo = ROOT.gDirectory.Get('htemp')
+
+    def result(self):
         xs = list()
         ys = list()
         eys = list()
         exs = list()
 
-        histo = self.tfile.Get(histo_name)
-
-        nbins = histo.GetNbinsX()
+        nbins = self.histo.GetNbinsX()
         for i in range(nbins):
-            x = histo.GetXaxis().GetBinLowEdge(i+1)
-            y = histo.GetBinContent(i+1)
-            ex = histo.GetXaxis().GetBinWidth(i+1)
-            ey = histo.GetBinError(i+1)
+            x = self.histo.GetXaxis().GetBinLowEdge(i+1)
+            y = self.histo.GetBinContent(i+1)
+            ex = self.histo.GetXaxis().GetBinWidth(i+1)
+            ey = self.histo.GetBinError(i+1)
             xs.append(x)
             ys.append(y)
             exs.append(ex)
             eys.append(ey)
-        xs.append(histo.GetXaxis().GetBinUpEdge(nbins))
+        xs.append(self.histo.GetXaxis().GetBinUpEdge(nbins))
         ys.append(0)
         exs.append(0)
         eys.append(0)
@@ -57,8 +73,7 @@ class ROOTResult(object):
         result = Result(edges=xarr, contents=yarr, errors=eyarr, xerrors=exarr)
         return result
 
-    def labels(self, histo_name):
-        histo = self.tfile.Get(histo_name)
-        xlabel = histo.GetXaxis().GetTitle()
-        ylabel = histo.GetXaxis().GetTitle()
+    def labels(self):
+        xlabel = self.histo.GetXaxis().GetTitle()
+        ylabel = self.histo.GetXaxis().GetTitle()
         return xlabel, ylabel

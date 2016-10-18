@@ -1,5 +1,6 @@
 # coding: utf-8
 
+from __future__ import division
 import copy
 import warnings
 import logging
@@ -138,6 +139,10 @@ class Result:
                 else:
                     errors = None
             return Result(edges, contents, errors, xerrors)
+
+    def __itruediv__(self, other):
+        self = self / other
+        return self
 
     def __getitem__(self, key):
         edges = self.edges[key]
