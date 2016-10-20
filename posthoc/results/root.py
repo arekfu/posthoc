@@ -13,26 +13,34 @@ logger = logging.getLogger(__name__)
 
 
 class ROOTResult(object):
-    def __init__(self, file_name, histo_name):
-        self.tfile = ROOT.TFile(file_name)
-        self.histo = self.tfile.Get(histo_name)
+    def __init__(self, tfile, histo):
+        self.tfile = tfile
+        self.histo = histo
 
-    def __init__(self, file_name, tree_name, var, cut, bins):
-        self.tfile = ROOT.TFile(file_name)
-        tree = self.tfile.Get(tree_name)
+    @classmethod
+    def fromhisto(cls, file_name, histo_name):
+        tfile = ROOT.TFile(file_name)
+        histo = tfile.Get(histo_name)
+        return ROOTResult(tfile, histo)
+
+    @classmethod
+    def fromtree(self, file_name, tree_name, var, cut, bins):
+        tfile = ROOT.TFile(file_name)
+        tree = tfile.Get(tree_name)
         if bins:
             nx, xmin, xmax, log = bins
             if log:
                 logxmin = np.log10(xmin)
                 logxmax = np.log10(xmax)
                 logbins = np.logspace(logxmin, logxmax, nx+1, base=10)
-                self.histo = ROOT.TH1F('htemp', 'htemp', nx, logbins)
+                histo = ROOT.TH1F('htemp', 'htemp', nx, logbins)
             else:
-                self.histo = ROOT.TH1F('htemp', 'htemp', nx, xmin, xmax)
+                histo = ROOT.TH1F('htemp', 'htemp', nx, xmin, xmax)
             tree.Project('htemp', var, cut)
         else:
             tree.Draw(var + '>>htemp', cut, 'goff')
-        self.histo = ROOT.gDirectory.Get('htemp')
+        histo = ROOT.gDirectory.Get('htemp')
+        return ROOTResult(tfile, histo)
 
     def result(self):
         xs = list()

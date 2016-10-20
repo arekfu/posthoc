@@ -55,7 +55,7 @@ class ROOTHistoDataSource(DataSource):
                 root_result = _ROOT_RESULT_CACHE[file_name, histo_name]
             else:
                 LOGGER.debug('Trying to open %s as a ROOTResult', file_name)
-                root_result = ROOTResult(file_name, histo_name)
+                root_result = ROOTResult.fromhisto(file_name, histo_name)
                 _ROOT_RESULT_CACHE[file_name, histo_name] = root_result
         except IOError as e:
             LOGGER.error('Fail: could not open %s as a ROOTResult: %s',
@@ -118,7 +118,7 @@ class ROOTTreeDataSource(DataSource):
                 root_result = _ROOT_RESULT_CACHE[file_name, tree_name]
             else:
                 LOGGER.debug('Trying to open %s as a ROOTResult', file_name)
-                root_result = ROOTResult(file_name, tree_name, var, cut, bins)
+                root_result = ROOTResult.fromtree(file_name, tree_name, var, cut, bins)
                 _ROOT_RESULT_CACHE[file_name, tree_name] = root_result
         except IOError as e:
             LOGGER.error('Fail: could not open %s as a ROOTResult: %s',
