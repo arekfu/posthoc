@@ -2,6 +2,7 @@
 
 import matplotlib.pyplot as plt
 import logging
+import copy
 
 from .plotter import Plotter
 from .datasources.datasource import to_datasource
@@ -46,11 +47,13 @@ class PlotManager(object):
         axes.set_xscale(xscale)
         axes.set_yscale(yscale)
         if legend:
-            LOGGER.debug('Adding legend')
-            if legendargs:
-                axes.legend(plotter.handles, plotter.labels, labelspacing=0.05,
-                            **legendargs)
+            if legendargs is not None:
+                this_legendargs = copy.deepcopy(legendargs)
             else:
-                axes.legend(plotter.handles, plotter.labels, labelspacing=0.05)
+                this_legendargs = {}
+            if 'labelspacing' not in this_legendargs:
+                this_legendargs['labelspacing'] = 0.05
+            LOGGER.debug('Adding legend')
+            axes.legend(plotter.handles, plotter.labels, **this_legendargs)
 
         return plotter.handles
