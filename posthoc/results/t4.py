@@ -10,6 +10,8 @@ from .result import Result, DTYPE
 # set up logging
 logger = logging.getLogger(__name__)
 
+def _is_descending_grid(grid):
+    return grid[0]>grid[1]
 
 class T4XMLResult(object):
     """Extract data from the Tripoli-4® output file.
@@ -145,6 +147,7 @@ class T4XMLResult(object):
                 score_div_value = None
         grid = self.grid(score_grid_name)
         score_id = score['id']
+        logger.debug('score ID for score "{}" is {}'.format(score_name, score_id))
         results = self.batch_results_xml(batch_num)
         resultxml = (results.find('result', scoreid=score_id)
                      .find('gelement', id=region_id))
@@ -248,11 +251,17 @@ class T4XMLResult(object):
                 score_div_value = None
         grid = self.grid(score_grid_name)
         score_id = score['id']
+        logger.debug('score ID for score "{}" is {}'.format(score_name, score_id))
         results = self.mean_results_xml(batch_num)
         resultxml = (results.find('mean_result', scoreid=score_id)
                      .find('gelement', id=region_id))
         val_list = [DTYPE(v.string) for v in resultxml.find_all('val')]
         sd_list = [DTYPE(v.string) for v in resultxml.find_all('sd')]
+        if _is_descending_grid(grid):
+            grid = np.array(list(reversed(grid)))
+            val_list = list(reversed(val_list))
+            sd_list = list(reversed(sd_list))
+
         val = np.array(val_list, dtype=DTYPE)
         sd = np.array(sd_list, dtype=DTYPE)
         if gelement_def['zone_type']=='SPECIAL_MESH':
