@@ -18,7 +18,8 @@ class T4XMLDataSource(DataSource):
     """Represents a T4 XML output file as a data source."""
 
     def __init__(self, file_name, score_name, label=None, batch_num='last',
-                 region_id=1, cell=(0,0,0,0), divide_by_bin=True, **options):
+                 region_id=1, cell=(0,0,0), time_step=0, divide_by_bin=True,
+                 **options):
         """Initialize the data source from an XML file.
 
         Arguments:
@@ -29,8 +30,9 @@ class T4XMLDataSource(DataSource):
         label -- a label for the data source
         batch_num -- the number of the batch.
         region_id -- the ID of the score region
-        cell -- for extended meshes, a 4-tuple giving the time, x, y and z
-                indices of the requested energy distribution.
+        cell -- for extended meshes, a 3-tuple giving x, y and z indices of the
+                requested energy distribution.
+        time_step -- the index of the requested time step
         divide_by_bin -- whether the score result should be divided by the bin
                          size.
         options -- any additional options (used for plotting).
@@ -70,6 +72,7 @@ class T4XMLDataSource(DataSource):
                 batch_num=batch_num,
                 region_id=region_id,
                 cell=cell,
+                time_step=time_step,
                 divide_by_bin=divide_by_bin
                 )
             LOGGER.debug('Parsed XML, result is:')
@@ -94,8 +97,9 @@ class T4XMLBatchDataSource(DataSource):
         label -- a label for the data source
         batch_num -- the number of the batch.
         region_id -- the ID of the score region
-        cell -- for extended meshes, a 4-tuple giving the time, x, y and z
-                indices of the requested energy distribution.
+        cell -- for extended meshes, a 3-tuple giving x, y and z indices of the
+                requested energy distribution.
+        time_step -- the index of the requested time step
         divide_by_bin -- whether the score result should be divided by the bin
                          size.
         options -- any additional options (used for plotting).
@@ -135,6 +139,7 @@ class T4XMLBatchDataSource(DataSource):
                 batch_num=batch_num,
                 region_id=region_id,
                 cell=cell,
+                time_step=time_step,
                 divide_by_bin=divide_by_bin
                 )
             LOGGER.debug('Parsed XML, result is:')
