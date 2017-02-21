@@ -237,7 +237,6 @@ class T4XMLResult(object):
             raise ValueError('argument score_name to T4XMLResult.mean_result '
                              'must be the name of a score')
         score_grid_name = score['nrj_dec']
-        time_grid_name = score['tps_dec']
         gelement_def = score.find('gelement_def', id=region_id)
         if gelement_def['zone_type']=='SPECIAL_MESH':
             score_div_value = DTYPE(1)
@@ -254,8 +253,13 @@ class T4XMLResult(object):
             nvals = 1
         grid = self.grid(score_grid_name)
         ne = grid.size - 1
-        time_grid = self.grid(time_grid_name)
-        nt = time_grid.size - 1
+
+        if 'tps_dec' in score.attrs:
+            time_grid_name = score['tps_dec']
+            time_grid = self.grid(time_grid_name)
+            nt = time_grid.size - 1
+        else:
+            nt = 1
 
         nvals *= ne
 
