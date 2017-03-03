@@ -98,7 +98,10 @@ class Result:
         xerrors = copy.deepcopy(self.xerrors)
         if np.isscalar(other):
             contents = self.contents * other
-            errors = self.errors * other
+            if self.errors is not None:
+                errors = self.errors * other
+            else:
+                errors = None
         else:
             self._check_consistency_edges(other)
             contents = self.contents * other.contents
@@ -122,7 +125,10 @@ class Result:
             xerrors = copy.deepcopy(self.xerrors)
             if np.isscalar(other):
                 contents = self.contents / other
-                errors = self.errors / other
+                if self.errors is not None:
+                    errors = self.errors / other
+                else:
+                    errors = None
             else:
                 self._check_consistency_edges(other)
                 contents = self.contents/other.contents
@@ -233,7 +239,8 @@ class Result:
             raise Exception("unrecognized 'pad' option value in "
                             "divide_by_bin; must be 'first' or 'last'")
         self.contents /= bin_sizes
-        self.errors /= bin_sizes
+        if self.errors is not None:
+            self.errors /= bin_sizes
 
     def multiply_by_bin_size(self, pad='last'):
         bin_sizes = np.ediff1d(self.edges)
@@ -245,7 +252,8 @@ class Result:
             raise Exception("unrecognized 'pad' option value in "
                             "divide_by_bin; must be 'first' or 'last'")
         self.contents *= bin_sizes
-        self.errors *= bin_sizes
+        if self.errors is not None:
+            self.errors *= bin_sizes
 
     def integrate(self, multiply_by_bin=True):
         if multiply_by_bin:
