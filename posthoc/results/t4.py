@@ -412,14 +412,14 @@ class T4TXTResult(object):
 
         self.score_numbers = { name: index for (index, name) in enumerate(score_names) }
 
-    def result(self, score, region_rank=0, divide_by_bin=True):
+    def result(self, score, region_rank, divide_by_bin=True):
         """Return the result for a given score in a given batch.
 
         Arguments:
         score -- name (string) or rank (int) of the score
+        region_rank -- the rank of the score region
 
         Keyword arguments:
-        region_rank -- the rank of the score region
         divide_by_bin -- whether the score result should be divided by the bin
                          size.
 

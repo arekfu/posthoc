@@ -154,18 +154,18 @@ class T4XMLBatchDataSource(DataSource):
 class T4TXTDataSource(DataSource):
     """Represents a T4 text output file as a data source."""
 
-    def __init__(self, file_name, score, label=None, batch_num='last',
-                 region_rank=0, divide_by_bin=True, **options):
+    def __init__(self, file_name, score, region_rank, label=None,
+                 batch_num='last', divide_by_bin=True, **options):
         """Initialize the data source from an XML file.
 
         Arguments:
         file_name -- name of the result file (string).
         score -- name of the score (string) or its rank as an int
+        region_rank -- the rank of the score region
 
         Keyword arguments:
         label -- a label for the data source
         batch_num -- the number of the batch.
-        region_rank -- the rank of the score region
         divide_by_bin -- whether the score result should be divided by the bin
                          size.
         options -- any additional options (used for plotting).
@@ -206,7 +206,7 @@ class T4TXTDataSource(DataSource):
             LOGGER.debug('Success: opened %s as a T4TXTResult', file_name)
             self.result = t4txt_result.result(
                 score,
-                region_rank=region_rank,
+                region_rank,
                 divide_by_bin=divide_by_bin
                 )
             LOGGER.debug('Parsed TXT, result is:')
