@@ -475,6 +475,12 @@ class T4TXTResult(object):
         edges = np.array(edges)
         contents = np.array(contents)
         errors = np.array(errors)
+        xerrors = np.ediff1d(edges, to_end=1.0)
 
-        return Result(edges=edges, contents=contents, errors=errors, xerrors=None)
+        self.divide_by_bin = divide_by_bin
+        if self.divide_by_bin:
+            contents /= xerrors
+            errors /= xerrors
+
+        return Result(edges=edges, contents=contents, errors=errors, xerrors=xerrors)
 
