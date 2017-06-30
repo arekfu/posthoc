@@ -3,7 +3,7 @@
 import logging
 
 import numpy as np
-from bs4 import BeautifulSoup
+import re
 
 from .result import Result, DTYPE
 
@@ -327,3 +327,154 @@ class T4XMLResult(object):
         else:
             xlabel = 'energy [MeV]'
         return xlabel, ylabel
+
+
+class T4TXTResult(object):
+    """Extract data from the Tripoli-4® output file.
+
+    This class is responsible for extracting the calculation results from the
+    Tripoli-4® text output file.
+    """
+
+    edition_start_regex = re.compile(r' RESULTS ARE GIVEN FOR SOURCE INTENSITY')
+    score_name_regex = re.compile(r'SCORE NAME : (.+)')
+    score_start_regex = re.compile(r'RESPONSE FUNCTION : ')
+    region_start_regex = re.compile(r'	 scoring mode :')
+    region_end_regex = re.compile(r'number of batches used: (\d+)')
+    edition_end_regex = re.compile(r' simulation time \(s\)')
+
+    dataline_regex = re.compile(r'([\d.eE+-]+) - ([\d.eE+-]+)	([\d.eE+-]+)'
+                                 '	([\d.eE+-]+)	([\d.eE+-]+)$')
+
+    def __init__(self, fname, batch_num):
+        """Initialize the instance from the file 'fname'.
+
+        Arguments:
+        fname     -- the name of the file.
+        batch_num -- the number of the batch.
+        """
+        self.fname = fname
+        self.batch_num = batch_num
+        self.parse_endpoints()
+
+    def parse_endpoints(self):
+        """Find the start and end offset in the file for the requested batch.
+        """
+        self.endpoints = []
+        score_names = []
+        score_endpoints = []
+        region_start = None
+        this_batch_num = None
+
+        with open(self.fname) as f:
+            for line in iter(f.readline, ''):
+                if re.match(self.edition_start_regex, line):
+                    score_endpoints = []
+                    self.endpoints = []
+                    score_names = []
+                    continue
+
+                if re.match(self.score_start_regex, line):
+                    if len(score_endpoints)!=0:
+                        self.endpoints.append(score_endpoints)
+                    score_endpoints = []
+                    score_names.append('')
+                    continue
+
+                match = re.match(self.score_name_regex, line)
+                if match:
+                    score_name = match.group(1)
+                    score_names[-1] = score_name
+                    continue
+
+                if re.match(self.region_start_regex, line):
+                    region_start = f.tell()
+                    continue
+
+                match = re.match(self.region_end_regex, line)
+                if match:
+                    this_batch_num = int(match.group(1))
+                    region_end = f.tell()
+                    score_endpoints.append((region_start,region_end))
+                    continue
+
+                if re.match(self.edition_end_regex, line):
+                    self.endpoints.append(score_endpoints)
+                    if self.batch_num == this_batch_num:
+                        break
+
+        if len(self.endpoints)==0:
+            raise ValueError('could not find results for batch_num={}'
+                                ' in file {}'.format(self.batch_num, self.fname))
+
+        if self.batch_num == 'last':
+            self.batch_num = this_batch_num
+
+        self.score_numbers = { name: index for (index, name) in enumerate(score_names) }
+
+    def result(self, score, region_rank=0, divide_by_bin=True):
+        """Return the result for a given score in a given batch.
+
+        Arguments:
+        score -- name (string) or rank (int) of the score
+
+        Keyword arguments:
+        region_rank -- the rank of the score region
+        divide_by_bin -- whether the score result should be divided by the bin
+                         size.
+
+        Return value:
+        a Result object containing the requested results.
+        """
+        if not isinstance(score, str) and not isinstance(score, int):
+            raise ValueError('argument score_name to T4TXTResult.batch_result '
+                             'must be a string or an int')
+
+        if isinstance(score, str):
+            try:
+                score = self.score_numbers[score]
+            except KeyError:
+                raise ValueError('could not find score {}'.format(score))
+
+        start, end = self.endpoints[score][region_rank]
+
+        xlo = []
+        xhi = []
+        val = []
+        err = []
+        with open(self.fname) as f:
+            f.seek(start)
+            for line in iter(f.readline, ''):
+                if f.tell()>=end:
+                    break
+                match = re.match(self.dataline_regex, line)
+                if match:
+                    xlo.append(match.group(1))
+                    xhi.append(match.group(2))
+                    val.append(match.group(3))
+                    err.append(match.group(4))
+
+        edges = []
+        contents = []
+        errors = []
+        for i, x in enumerate(xlo):
+            if i<len(xlo)-1:
+                edges.append(float(xlo[i]))
+                cont = float(val[i])
+                contents.append(cont)
+                errors.append(float(err[i]) * cont * 0.01)
+                if xlo[i+1]!=xhi[i]:
+                    edges.append(float(xhi[i]))
+                    contents.append(0.0)
+                    errors.append(0.0)
+            else:
+                edges.append(float(xhi[i]))
+                contents.append(0.0)
+                errors.append(0.0)
+
+        edges = np.array(edges)
+        contents = np.array(contents)
+        errors = np.array(errors)
+
+        return Result(edges=edges, contents=contents, errors=errors, xerrors=None)
+
