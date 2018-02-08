@@ -154,14 +154,15 @@ class T4XMLBatchDataSource(DataSource):
 class T4TXTDataSource(DataSource):
     """Represents a T4 text output file as a data source."""
 
-    def __init__(self, file_name, score, region_rank, label=None,
+    def __init__(self, file_name, score, where, label=None,
                  batch_num='last', divide_by_bin=True, **options):
         """Initialize the data source from an XML file.
 
         Arguments:
         file_name -- name of the result file (string).
         score -- name of the score (string) or its rank as an int
-        region_rank -- the rank of the score region
+        where -- for normal scores: the rank of the score region; for
+                 extended-mesh scores: the triple (i,j,k) identifying the cell.
 
         Keyword arguments:
         label -- a label for the data source
@@ -206,7 +207,7 @@ class T4TXTDataSource(DataSource):
             LOGGER.debug('Success: opened %s as a T4TXTResult', file_name)
             self.result = t4txt_result.result(
                 score,
-                region_rank,
+                where,
                 divide_by_bin=divide_by_bin
                 )
             LOGGER.debug('Parsed TXT, result is:')

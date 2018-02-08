@@ -34,6 +34,8 @@ class DataSource(object):
             self.result += other
         return self
 
+    __radd__ = __add__
+
     def __sub__(self, other):
         sub = copy.deepcopy(self)
         sub -= other
@@ -57,6 +59,8 @@ class DataSource(object):
         else:
             self.result *= other
         return self
+
+    __rmul__ = __mul__
 
     def __truediv__(self, other):
         div = copy.deepcopy(self)

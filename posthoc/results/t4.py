@@ -4,6 +4,7 @@ import logging
 
 import numpy as np
 import re
+from bs4 import BeautifulSoup
 
 from .result import Result, DTYPE
 
@@ -281,7 +282,6 @@ class T4XMLResult(object):
         if gelement_def['zone_type']=='SPECIAL_MESH':
             it = time_step
             i, j, k = cell
-            print(val.shape)
             val = val.reshape(nt, ne, nx, ny, nz)[it,:,i,j,k]
             sd = sd.reshape(nt, ne, nx, ny, nz)[it,:,i,j,k]
         else:
@@ -340,11 +340,15 @@ class T4TXTResult(object):
     score_name_regex = re.compile(r'SCORE NAME : (.+)')
     score_start_regex = re.compile(r'RESPONSE FUNCTION : ')
     region_start_regex = re.compile(r'	 scoring mode :')
+    extended_mesh_regex = re.compile(r'	 scoring zone : 	 Results on a mesh:')
     region_end_regex = re.compile(r'number of batches used: (\d+)')
     edition_end_regex = re.compile(r' simulation time \(s\)')
 
+    energy_range_regex = re.compile(r'Energy range \(in MeV\): ([\d.eE+-]+) - ([\d.eE+-]+)')
     dataline_regex = re.compile(r'([\d.eE+-]+) - ([\d.eE+-]+)	([\d.eE+-]+)'
                                  '	([\d.eE+-]+)	([\d.eE+-]+)$')
+    mesh_cell_regex = re.compile(r'	 \((\d+),(\d+),(\d+)\)	 ([\d.eE+-]+)	([\d.eE+-]+)$')
+    energy_integrated_regex = re.compile(r'ENERGY INTEGRATED RESULTS :$')
 
     def __init__(self, fname, batch_num):
         """Initialize the instance from the file 'fname'.
@@ -361,6 +365,7 @@ class T4TXTResult(object):
         """Find the start and end offset in the file for the requested batch.
         """
         self.endpoints = []
+        self.score_meshes = []
         score_names = []
         score_endpoints = []
         region_start = None
@@ -376,9 +381,10 @@ class T4TXTResult(object):
 
                 if re.match(self.score_start_regex, line):
                     if len(score_endpoints)!=0:
-                        self.endpoints.append(score_endpoints)
+                        self.endpoints.append((is_extended_mesh, score_endpoints))
                     score_endpoints = []
                     score_names.append('')
+                    is_extended_mesh = False
                     continue
 
                 match = re.match(self.score_name_regex, line)
@@ -391,15 +397,19 @@ class T4TXTResult(object):
                     region_start = f.tell()
                     continue
 
+                if re.match(self.extended_mesh_regex, line):
+                    is_extended_mesh = True
+                    continue
+
                 match = re.match(self.region_end_regex, line)
                 if match:
                     this_batch_num = int(match.group(1))
                     region_end = f.tell()
-                    score_endpoints.append((region_start,region_end))
+                    score_endpoints.append((region_start, region_end))
                     continue
 
                 if re.match(self.edition_end_regex, line):
-                    self.endpoints.append(score_endpoints)
+                    self.endpoints.append((is_extended_mesh, score_endpoints))
                     if self.batch_num == this_batch_num:
                         break
 
@@ -412,12 +422,13 @@ class T4TXTResult(object):
 
         self.score_numbers = { name: index for (index, name) in enumerate(score_names) }
 
-    def result(self, score, region_rank, divide_by_bin=True):
+    def result(self, score, where, divide_by_bin=True):
         """Return the result for a given score in a given batch.
 
         Arguments:
         score -- name (string) or rank (int) of the score
-        region_rank -- the rank of the score region
+        where -- for normal scores: the rank of the score region; for
+                 extended-mesh scores: the triple (i,j,k) identifying the cell.
 
         Keyword arguments:
         divide_by_bin -- whether the score result should be divided by the bin
@@ -436,7 +447,22 @@ class T4TXTResult(object):
             except KeyError:
                 raise ValueError('could not find score {}'.format(score))
 
-        start, end = self.endpoints[score][region_rank]
+        is_extended_mesh, endpoints = self.endpoints[score]
+
+        if is_extended_mesh:
+            xlo, xhi, val, err = self.parse_extended_mesh(endpoints, where)
+        else:
+            xlo, xhi, val, err = self.parse_score(endpoints, where)
+
+        return self.to_result(xlo, xhi, val, err, divide_by_bin)
+
+
+    def parse_score(self, endpoints, where):
+
+        if not isinstance(where, int):
+            raise ValueError("'where' parameter must be an int (region rank) for normal scores")
+
+        start, end = endpoints[where]
 
         xlo = []
         xhi = []
@@ -454,33 +480,76 @@ class T4TXTResult(object):
                     val.append(match.group(3))
                     err.append(match.group(4))
 
+        return xlo, xhi, val, err
+
+
+    def parse_extended_mesh(self, endpoints, where):
+
+        # only one region is allowed for scores on extended meshes
+        start, end = endpoints[0]
+
+        xlo = []
+        xhi = []
+        val = []
+        err = []
+        with open(self.fname) as f:
+            f.seek(start)
+            for line in iter(f.readline, ''):
+                if f.tell()>=end:
+                    break
+
+                match = re.match(self.energy_range_regex, line)
+                if match:
+                    xlo.append(match.group(1))
+                    xhi.append(match.group(2))
+                    continue
+
+                match = re.match(self.mesh_cell_regex, line)
+                if match:
+                    i = int(match.group(1))
+                    j = int(match.group(2))
+                    k = int(match.group(3))
+                    if (i, j, k) == where:
+                        val.append(match.group(4))
+                        err.append(match.group(5))
+                    continue
+
+                match = re.match(self.energy_integrated_regex, line)
+                if match:
+                    break
+
+        if len(val) != len(xlo):
+            raise ValueError('Expected {} cell values, found {}: check your cell specification {}'
+                    .format(len(xlo), len(val), where))
+
+        return xlo, xhi, val, err
+
+
+    def to_result(self, xlo, xhi, val, err, divide_by_bin):
         edges = []
         contents = []
         errors = []
         for i, x in enumerate(xlo):
-            if i<len(xlo)-1:
-                edges.append(float(xlo[i]))
-                cont = float(val[i])
-                contents.append(cont)
-                errors.append(float(err[i]) * cont * 0.01)
-                if xlo[i+1]!=xhi[i]:
-                    edges.append(float(xhi[i]))
-                    contents.append(0.0)
-                    errors.append(0.0)
-            else:
+            edges.append(float(xlo[i]))
+            cont = float(val[i])
+            contents.append(cont)
+            errors.append(float(err[i]) * cont * 0.01)
+            if i<len(xlo)-1 and xlo[i+1]!=xhi[i]:
                 edges.append(float(xhi[i]))
                 contents.append(0.0)
                 errors.append(0.0)
+        edges.append(float(xhi[-1]))
+        contents.append(0.0)
+        errors.append(0.0)
 
         edges = np.array(edges)
         contents = np.array(contents)
         errors = np.array(errors)
-        xerrors = np.ediff1d(edges, to_end=1.0)
 
+        xerrors = np.ediff1d(edges, to_end=1.0)
         self.divide_by_bin = divide_by_bin
         if self.divide_by_bin:
             contents /= xerrors
             errors /= xerrors
 
-        return Result(edges=edges, contents=contents, errors=errors, xerrors=xerrors)
-
+        return Result(edges=edges, contents=contents, errors=errors, xerrors=None)
