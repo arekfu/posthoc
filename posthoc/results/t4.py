@@ -272,13 +272,11 @@ class T4XMLResult(object):
         val_list = [DTYPE(v.string) for v in resultxml.find_all('val')]
         sd_list = [DTYPE(v.string) for v in resultxml.find_all('sd')]
 
-        if _is_descending_grid(grid):
-            grid = np.array(list(reversed(grid)))
-            val_list = list(reversed(val_list))
-            sd_list = list(reversed(sd_list))
-
         val = np.array(val_list, dtype=DTYPE)
         sd = np.array(sd_list, dtype=DTYPE)
+        if _is_descending_grid(grid):
+            grid, val, sd = self.reverse_grid(grid, val, sd)
+
         if gelement_def['zone_type']=='SPECIAL_MESH':
             it = time_step
             i, j, k = cell
@@ -302,6 +300,16 @@ class T4XMLResult(object):
         val = np.append(val, [DTYPE(0)])
         sd = np.append(sd, [DTYPE(0)])
         return Result(edges=grid, contents=val, errors=sd, xerrors=None)
+
+    def reverse_grid(self, grid, val, sd):
+        '''Reverse the given energy grid, the value vector and the RMS vector.'''
+        ne = len(grid) - 1
+        nt = len(val) // ne
+        assert len(val) == len(sd)
+        rgrid = grid[::-1]
+        rval = val.reshape(nt, ne)[:, ::-1].reshape(nt*ne)
+        rsd = sd.reshape(nt, ne)[:, ::-1].reshape(nt*ne)
+        return rgrid, rval, rsd
 
     def labels(self, score_name):
         """Suggest axis labels for the given score."""
