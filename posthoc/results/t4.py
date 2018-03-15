@@ -285,6 +285,9 @@ class T4XMLResult(object):
         else:
             min_index = time_step*nvals
             max_index = (time_step+1)*nvals
+            if min_index < 0 or max_index > len(val):
+                raise IndexError('time step {} out of bounds'
+                        .format(time_step))
             val = val[min_index:max_index]
             sd = sd[min_index:max_index]
         # divide by the bin width if requested
